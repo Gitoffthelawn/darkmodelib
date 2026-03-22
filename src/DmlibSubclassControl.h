@@ -334,11 +334,13 @@ namespace dmlib_subclass
 		bool m_isHot = false;
 		bool m_hasBtnStyle = true;
 		bool m_isPressed = false;
+		bool m_isLVChild = false;
 
 		HeaderData() = delete;
 
-		explicit HeaderData(bool hasBtnStyle) noexcept
-			: m_hasBtnStyle(hasBtnStyle)
+		explicit HeaderData(HWND hWnd) noexcept
+			: m_hasBtnStyle((::GetWindowLongPtr(hWnd, GWL_STYLE) & HDS_BUTTONS) == HDS_BUTTONS)
+			, m_isLVChild(dmlib_subclass::cmpWndClassName(::GetParent(hWnd), WC_LISTVIEW))
 		{}
 	};
 

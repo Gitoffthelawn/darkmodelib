@@ -370,8 +370,8 @@ LRESULT CALLBACK dmlib_subclass::ButtonSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ButtonSubclass, uIdSubclass);
-			std::unique_ptr<ButtonData> u_u_ptrData(pButtonData);
-			u_u_ptrData.reset(nullptr);
+			std::unique_ptr<ButtonData> u_ptrData(pButtonData);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -625,7 +625,7 @@ LRESULT CALLBACK dmlib_subclass::GroupboxSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, GroupboxSubclass, uIdSubclass);
 			std::unique_ptr<ButtonData> u_ptrData(pButtonData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -1050,7 +1050,7 @@ LRESULT CALLBACK dmlib_subclass::UpDownSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, UpDownSubclass, uIdSubclass);
 			std::unique_ptr<UpDownData> u_ptrData(pUpDownData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -1366,7 +1366,7 @@ LRESULT CALLBACK dmlib_subclass::TabPaintSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, TabPaintSubclass, uIdSubclass);
 			std::unique_ptr<TabData> u_ptrData(pTabData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -1575,7 +1575,7 @@ LRESULT CALLBACK dmlib_subclass::CustomBorderSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, CustomBorderSubclass, uIdSubclass);
 			std::unique_ptr<BorderMetricsData> u_ptrData(pBorderMetricsData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -2073,7 +2073,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, ComboBoxSubclass, uIdSubclass);
 			std::unique_ptr<ComboBoxData> u_ptrData(pComboboxData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -2125,18 +2125,6 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 			return 0;
 		}
 
-		case WM_ENABLE:
-		{
-			if (!DarkMode::isEnabled())
-			{
-				break;
-			}
-
-			const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE);
-			return retVal;
-		}
-
 		case WM_DPICHANGED_AFTERPARENT:
 		{
 			themeData.closeTheme();
@@ -2147,6 +2135,18 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 		{
 			themeData.closeTheme();
 			break;
+		}
+
+		case WM_ENABLE:
+		{
+			if (!DarkMode::isEnabled())
+			{
+				break;
+			}
+
+			const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE);
+			return retVal;
 		}
 
 		default:
@@ -2371,6 +2371,19 @@ LRESULT CALLBACK dmlib_subclass::ListViewSubclass(
 			return DarkMode::onCtlColorCtrl(reinterpret_cast<HDC>(wParam));
 		}
 
+		case WM_ENABLE:
+		{
+			if (!DarkMode::isEnabled())
+			{
+				break;
+			}
+
+			const bool isDisabled = (wParam == FALSE);
+			DarkMode::replaceClientEdgeWithBorderSafeEx(hWnd, isDisabled);
+
+			break;
+		}
+
 		case WM_NOTIFY:
 		{
 			if (!DarkMode::isEnabled())
@@ -2542,12 +2555,28 @@ static void paintHeader(HWND hWnd, HDC hdc, dmlib_subclass::HeaderData& headerDa
 	const bool hasTheme = themeData.ensureTheme(hWnd);
 	auto& fontData = headerData.m_fontData;
 
+	HWND hList = ::GetParent(hWnd);
+
+	HBRUSH hBrush = DarkMode::getHeaderBackgroundBrush();
+	HPEN hPen = DarkMode::getHeaderEdgePen();
+	COLORREF clrText = DarkMode::getHeaderTextColor();
+
+	const bool isDisabled = (::IsWindowEnabled(hWnd) == FALSE)
+		|| (headerData.m_isLVChild && (::IsWindowEnabled(hList) == FALSE));
+
+	if (isDisabled)
+	{
+		hBrush = DarkMode::getDlgBackgroundBrush();
+		hPen = DarkMode::getDisabledEdgePen();
+		clrText = DarkMode::getDisabledTextColor();
+	}
+
 	::SetBkMode(hdc, TRANSPARENT);
-	const auto holdPen = dmlib_paint::GdiObject{ hdc, DarkMode::getHeaderEdgePen(), true };
+	const auto holdPen = dmlib_paint::GdiObject{ hdc, hPen, true };
 
 	RECT rcHeader{};
 	::GetClientRect(hWnd, &rcHeader);
-	::FillRect(hdc, &rcHeader, DarkMode::getHeaderBackgroundBrush());
+	::FillRect(hdc, &rcHeader, hBrush);
 
 	// Font part
 
@@ -2570,19 +2599,18 @@ static void paintHeader(HWND hWnd, HDC hdc, dmlib_subclass::HeaderData& headerDa
 	if (hasTheme)
 	{
 		dtto.dwFlags = DTT_TEXTCOLOR;
-		dtto.crText = DarkMode::getHeaderTextColor();
+		dtto.crText = clrText;
 	}
 	else
 	{
-		::SetTextColor(hdc, DarkMode::getHeaderTextColor());
+		::SetTextColor(hdc, clrText);
 	}
 
 	// Special handling with gridlines
 
-	HWND hList = ::GetParent(hWnd);
 	bool hasGridlines = false;
-	if (const auto lvStyle = ::GetWindowLongPtr(hList, GWL_STYLE) & LVS_TYPEMASK;
-		lvStyle == LVS_REPORT)
+	if (headerData.m_isLVChild
+		&& (::GetWindowLongPtr(hList, GWL_STYLE) & LVS_TYPEMASK) == LVS_REPORT)
 	{
 		const auto lvExStyle = ListView_GetExtendedListViewStyle(hList);
 		hasGridlines = (lvExStyle & LVS_EX_GRIDLINES) == LVS_EX_GRIDLINES;
@@ -2629,7 +2657,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, HeaderSubclass, uIdSubclass);
 			std::unique_ptr<HeaderData> u_ptrData(pHeaderData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -2912,7 +2940,7 @@ LRESULT CALLBACK dmlib_subclass::StatusBarSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, StatusBarSubclass, uIdSubclass);
 			std::unique_ptr<StatusBarData> u_ptrData(pStatusBarData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -3113,7 +3141,7 @@ LRESULT CALLBACK dmlib_subclass::ProgressBarSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, ProgressBarSubclass, uIdSubclass);
 			std::unique_ptr<ProgressBarData> u_ptrData(pProgressBarData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 
@@ -3212,7 +3240,7 @@ LRESULT CALLBACK dmlib_subclass::StaticTextSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, StaticTextSubclass, uIdSubclass);
 			std::unique_ptr<StaticTextData> u_ptrData(pStaticTextData);
-			u_ptrData.reset(nullptr);
+			u_ptrData.reset();
 			break;
 		}
 

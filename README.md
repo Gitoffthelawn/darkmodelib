@@ -46,7 +46,7 @@ Darkmodelib works best with Windows 10 version 1809 and later, and mainly target
 ## Used by
 
 - Parts of the code have been backported to [Notepad++](https://github.com/notepad-plus-plus/notepad-plus-plus/blob/master/PowerEditor/src/NppDarkMode.cpp)
-- [7-Zip](https://github.com/ozone10/7zip-Dark7zip) and its fork [7-Zip-zstd](https://github.com/ozone10/7zip-Dark7zip/tree/7z-zstd)
+- [7-Zip](https://github.com/ozone10/7zip-Dark7zip) and its fork [7-Zip-zstd](https://github.com/mcmilk/7-Zip-zstd)
 - [SumatraPDF](https://github.com/sumatrapdfreader/sumatrapdf)
 - [WinMerge](https://github.com/WinMerge/winmerge)
 

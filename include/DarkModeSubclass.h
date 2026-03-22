@@ -589,6 +589,8 @@ namespace DarkMode
 	DMLIB_API void setWindowExStyle(HWND hWnd, bool setExStyle, LONG_PTR exStyleFlag);
 	/// Replaces an extended edge (e.g. client edge) with a standard window border.
 	DMLIB_API void replaceExEdgeWithBorder(HWND hWnd, bool replace, LONG_PTR exStyleFlag);
+	/// Safely toggles `WS_EX_CLIENTEDGE` with `WS_BORDER`.
+	DMLIB_API void replaceClientEdgeWithBorderSafeEx(HWND hWnd, bool replace);
 	/// Safely toggles `WS_EX_CLIENTEDGE` with `WS_BORDER` based on dark mode state.
 	DMLIB_API void replaceClientEdgeWithBorderSafe(HWND hWnd);
 

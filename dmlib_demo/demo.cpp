@@ -300,7 +300,7 @@ static void SelectAndRefreshMode(HWND hWnd, UINT checkID)
 			{
 				return;
 			}
-
+			
 			dmType = 0;
 			break;
 		}
@@ -392,6 +392,39 @@ static HRESULT CALLBACK TaskDlgCallback(
 		}
 	}
 	return S_OK;
+}
+
+static LRESULT CALLBACK RichEditNoTabSubclass(
+	HWND hWnd,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam,
+	UINT_PTR uIdSubclass,
+	[[maybe_unused]] DWORD_PTR /*dwRefData*/
+)
+{
+	switch (uMsg)
+	{
+		case WM_NCDESTROY:
+		{
+			::RemoveWindowSubclass(hWnd, RichEditNoTabSubclass, uIdSubclass);
+			break;
+		}
+
+		case WM_GETDLGCODE:
+		{
+			LRESULT resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			resVal &= ~DLGC_WANTTAB;
+			if (lParam != 0
+				&& reinterpret_cast<MSG*>(lParam)->message == WM_KEYDOWN
+				&& reinterpret_cast<MSG*>(lParam)->wParam == VK_TAB)
+			{
+				resVal &= ~DLGC_WANTMESSAGE;
+			}
+			return resVal;
+		}
+	}
+	return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 static HMODULE hModRich = nullptr;
@@ -996,8 +1029,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					L"\\line\n"
 					L"ozone10\\line\n";
 
-				createCtrl(MSFTEDIT_CLASS, richEditText.c_str(), ES_CENTER | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_BORDER,
+				HWND hRichEdit = createCtrl(MSFTEDIT_CLASS, richEditText.c_str(), ES_CENTER | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_BORDER,
 					xPos5thColCtrl, yRichEdit, wCtrl5thCol, heightRichEdit, IdCtrl::richEdit, WS_EX_CLIENTEDGE);
+
+				::SetWindowSubclass(hRichEdit, RichEditNoTabSubclass, static_cast<UINT_PTR>(IdCtrl::richEdit), 0);
 			}
 
 			// --- Month Calendar ---

@@ -545,22 +545,33 @@ static void prepaintListViewItem(LPNMLVCUSTOMDRAW& lplvcd, bool isReport, bool h
 {
 	auto* lplvcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
 	const auto& hList = lplvcd->nmcd.hdr.hwndFrom;
-	const auto lvStyle = ::GetWindowLongPtr(hList, GWL_STYLE) & LVS_TYPEMASK;
-	const bool isReport = (lvStyle == LVS_REPORT);
-	bool hasGridlines = false;
-	if (isReport)
-	{
-		const auto lvExStyle = ListView_GetExtendedListViewStyle(hList);
-		hasGridlines = (lvExStyle & LVS_EX_GRIDLINES) == LVS_EX_GRIDLINES;
-	}
+	const bool isDisabled = ::IsWindowEnabled(hList) == FALSE;
+	// makes sense only in enabled state
+	const bool isReport = !isDisabled && ((::GetWindowLongPtr(hList, GWL_STYLE) & LVS_TYPEMASK) == LVS_REPORT);
+	// makes sense only if list view has LVS_REPORT style
+	const bool hasGridlines = isReport && ((ListView_GetExtendedListViewStyle(hList) & LVS_EX_GRIDLINES) == LVS_EX_GRIDLINES);
 
 	switch (lplvcd->nmcd.dwDrawStage)
 	{
 		case CDDS_PREPAINT:
 		{
-			if (isReport && hasGridlines)
+			const auto hBrush = [&isDisabled, &hasGridlines]() -> HBRUSH
 			{
-				::FillRect(lplvcd->nmcd.hdc, &lplvcd->nmcd.rc, DarkMode::getViewBackgroundBrush());
+				if (isDisabled)
+				{
+					return DarkMode::getDlgBackgroundBrush();
+				}
+
+				if (hasGridlines)
+				{
+					return DarkMode::getViewBackgroundBrush();
+				}
+				return nullptr;
+			}();
+
+			if (hBrush)
+			{
+				::FillRect(lplvcd->nmcd.hdc, &lplvcd->nmcd.rc, hBrush);
 			}
 
 			return CDRF_NOTIFYITEMDRAW;
@@ -568,7 +579,17 @@ static void prepaintListViewItem(LPNMLVCUSTOMDRAW& lplvcd, bool isReport, bool h
 
 		case CDDS_ITEMPREPAINT:
 		{
-			prepaintListViewItem(lplvcd, isReport, hasGridlines);
+			if (isDisabled)
+			{
+				lplvcd->clrFace = DarkMode::getDlgBackgroundColor();
+				lplvcd->clrText = DarkMode::getDisabledTextColor();
+				lplvcd->clrTextBk = DarkMode::getDlgBackgroundColor();
+			}
+			else
+			{
+				prepaintListViewItem(lplvcd, isReport, hasGridlines);
+			}
+
 			return CDRF_NEWFONT;
 		}
 

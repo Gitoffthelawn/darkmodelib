@@ -386,6 +386,7 @@ namespace DarkMode
 	inline void DummySetWindowStyle(HWND, bool, LONG_PTR) {}
 	inline void DummySetWindowExStyle(HWND, bool, LONG_PTR) {}
 	inline void DummyReplaceExEdgeWithBorder(HWND, bool, LONG_PTR) {}
+	inline void DummyReplaceClientEdgeWithBorderSafeEx(HWND) {}
 	inline void DummyReplaceClientEdgeWithBorderSafe(HWND) {}
 
 	inline void DummySetProgressBarClassicTheme(HWND) {}
@@ -885,6 +886,9 @@ namespace DarkMode
 
 	using fnReplaceExEdgeWithBorder = void (*)(HWND hWnd, bool replace, LONG_PTR exStyleFlag);
 	inline fnReplaceExEdgeWithBorder replaceExEdgeWithBorder = nullptr;
+
+	using fnReplaceClientEdgeWithBorderSafeEx = void (*)(HWND hWnd);
+	inline fnReplaceClientEdgeWithBorderSafeEx replaceClientEdgeWithBorderSafeEx = nullptr;
 
 	using fnReplaceClientEdgeWithBorderSafe = void (*)(HWND hWnd);
 	inline fnReplaceClientEdgeWithBorderSafe replaceClientEdgeWithBorderSafe = nullptr;

@@ -1667,6 +1667,9 @@ static void setListViewCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) noexcep
 				DarkMode::setDarkThemeExperimentalEx(hHeader, L"ItemsView");
 			}
 		}
+
+		const bool isDisabled = DarkMode::isEnabled() && ::IsWindowEnabled(hWnd) == FALSE;
+		DarkMode::replaceClientEdgeWithBorderSafeEx(hWnd, isDisabled);
 	}
 
 	if (p.m_subclass)
@@ -1697,8 +1700,7 @@ static void setListViewCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) noexcep
  */
 void DarkMode::setHeaderCtrlSubclass(HWND hWnd)
 {
-	const bool hasBtnStyle = (::GetWindowLongPtr(hWnd, GWL_STYLE) & HDS_BUTTONS) == HDS_BUTTONS;
-	dmlib_subclass::SetSubclass<dmlib_subclass::HeaderData>(hWnd, dmlib_subclass::HeaderSubclass, dmlib_subclass::SubclassID::header, hasBtnStyle);
+	dmlib_subclass::SetSubclass<dmlib_subclass::HeaderData>(hWnd, dmlib_subclass::HeaderSubclass, dmlib_subclass::SubclassID::header, hWnd);
 }
 
 /**
@@ -3067,7 +3069,7 @@ void DarkMode::setDarkTreeViewCheckboxes(HWND hWnd)
 	if (const auto tvStyle = ::GetWindowLongPtr(hWnd, GWL_STYLE);
 		(tvStyle & TVS_CHECKBOXES) == TVS_CHECKBOXES)
 	{
-		//tvType = ViewCheckbox::tvSimple;
+		// do nothing tvType already has ViewCheckbox::tvSimple
 	}
 	else if (const auto tvExStyle = TreeView_GetExtendedStyle(hWnd);
 		(tvExStyle & (TVS_EX_PARTIALCHECKBOXES | TVS_EX_EXCLUSIONCHECKBOXES | TVS_EX_DIMMEDCHECKBOXES)) != 0)
@@ -3104,12 +3106,7 @@ void DarkMode::setDarkTreeViewCheckboxes(HWND hWnd)
 void DarkMode::setDarkRichEdit(HWND hWnd)
 {
 	const auto nStyle = ::GetWindowLongPtrW(hWnd, GWL_STYLE);
-	const bool hasBorder = (nStyle & WS_BORDER) == WS_BORDER;
-
 	const bool isReadOnly = (nStyle & ES_READONLY) == ES_READONLY;
-
-	const auto nExStyle = ::GetWindowLongPtrW(hWnd, GWL_EXSTYLE);
-	const bool hasClientEdge = (nExStyle & WS_EX_CLIENTEDGE) == WS_EX_CLIENTEDGE;
 
 	CHARFORMATW cf{};
 	cf.cbSize = sizeof(CHARFORMATW);
@@ -3134,8 +3131,7 @@ void DarkMode::setDarkRichEdit(HWND hWnd)
 		::SetWindowTheme(hWnd, nullptr, nullptr);
 	}
 
-	DarkMode::setWindowStyle(hWnd, DarkMode::isEnabled() || !hasClientEdge, WS_BORDER);
-	DarkMode::setWindowExStyle(hWnd, !DarkMode::isEnabled() || !hasBorder, WS_EX_CLIENTEDGE);
+	DarkMode::replaceClientEdgeWithBorderSafe(hWnd);
 }
 
 /**
@@ -3630,8 +3626,37 @@ void DarkMode::setWindowExStyle(HWND hWnd, bool setExStyle, LONG_PTR exStyleFlag
  */
 void DarkMode::replaceExEdgeWithBorder(HWND hWnd, bool replace, LONG_PTR exStyleFlag)
 {
-	DarkMode::setWindowExStyle(hWnd, !replace, exStyleFlag);
 	DarkMode::setWindowStyle(hWnd, replace, WS_BORDER);
+	DarkMode::setWindowExStyle(hWnd, !replace, exStyleFlag);
+}
+
+/**
+ * @brief Safely toggles `WS_EX_CLIENTEDGE` with `WS_BORDER`.
+ *
+ * @param[in]   hWnd Handle to the target window. No action is taken if `hWnd` is `nullptr`.
+ * @param[in]   replace `true` to apply `WS_BORDER`; `false` to restore`WS_EX_CLIENTEDGE`.
+ *
+ * @note Functions only affects controls, which have `WS_EX_CLIENTEDGE` or `WS_BORDER` (ex)styles.
+ *
+ * @see DarkMode::replaceExEdgeWithBorder()
+ */
+void DarkMode::replaceClientEdgeWithBorderSafeEx(HWND hWnd, bool replace)
+{
+	if (hWnd == nullptr)
+	{
+		return;
+	}
+
+	const auto nStyle = ::GetWindowLongPtrW(hWnd, GWL_STYLE);
+	const bool hasBorder = (nStyle & WS_BORDER) == WS_BORDER;
+
+	const auto nExStyle = ::GetWindowLongPtrW(hWnd, GWL_EXSTYLE);
+	const bool hasClientEdge = (nExStyle & WS_EX_CLIENTEDGE) == WS_EX_CLIENTEDGE;
+
+	if (hasBorder || hasClientEdge)
+	{
+		DarkMode::replaceExEdgeWithBorder(hWnd, replace, WS_EX_CLIENTEDGE);
+	}
 }
 
 /**
@@ -3642,14 +3667,13 @@ void DarkMode::replaceExEdgeWithBorder(HWND hWnd, bool replace, LONG_PTR exStyle
  *
  * @param[in] hWnd Handle to the target window. No action is taken if `hWnd` is `nullptr`.
  *
- * @see DarkMode::replaceExEdgeWithBorder()
+ * @note Functions only affects controls, which have `WS_EX_CLIENTEDGE` or `WS_BORDER` (ex)styles.
+ *
+ * @see DarkMode::replaceClientEdgeWithBorderSafeEx()
  */
 void DarkMode::replaceClientEdgeWithBorderSafe(HWND hWnd)
 {
-	if (hWnd != nullptr)
-	{
-		DarkMode::replaceExEdgeWithBorder(hWnd, DarkMode::isEnabled(), WS_EX_CLIENTEDGE);
-	}
+	DarkMode::replaceClientEdgeWithBorderSafeEx(hWnd, DarkMode::isEnabled());
 }
 
 /**

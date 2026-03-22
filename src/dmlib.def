@@ -164,6 +164,7 @@ EXPORTS
 	setWindowStyle
 	setWindowExStyle
 	replaceExEdgeWithBorder
+	replaceClientEdgeWithBorderSafeEx
 	replaceClientEdgeWithBorderSafe
 	setProgressBarClassicTheme
 	onCtlColor

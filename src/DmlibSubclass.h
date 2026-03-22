@@ -396,6 +396,10 @@ namespace dmlib_subclass
 	 */
 	[[nodiscard]] inline bool cmpWndClassName(HWND hWnd, const wchar_t* classNameToCmp)
 	{
+		if (!hWnd)
+		{
+			return false;
+		}
 		return (dmlib_subclass::getWndClassName(hWnd) == classNameToCmp);
 	}
 
