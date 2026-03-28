@@ -898,7 +898,7 @@ DWORD dmlib::getWindowsBuildNumber()
 /// Windows 11 version 25H2 build 26200 rev 6899+, or later builds.
 static bool doesWin11SupportDarkThemeStyle() noexcept
 {
-	static const DWORD win11Revision = []()
+	static const DWORD win11Revision = []() noexcept
 	{
 		DWORD revisionReg = 0;
 		DWORD dwBufSize = sizeof(revisionReg);
@@ -1488,7 +1488,7 @@ void dmlib::removeComboBoxCtrlSubclass(HWND hWnd)
  * @see DarkModeParams
  * @see dmlib::setComboBoxCtrlSubclass()
  */
-static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
+static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) noexcept
 {
 	const auto cbStyle = ::GetWindowLongPtr(hWnd, GWL_STYLE) & CBS_DROPDOWNLIST;
 	const bool isCbList = cbStyle == CBS_DROPDOWNLIST;
@@ -2255,7 +2255,7 @@ static void setMonthCalendarCtrlTheme(HWND hWnd, DarkModeParams p) noexcept
  * @see setDTPCtrlSubclassAndTheme()
  * @see setMonthCalendarCtrlTheme()
  */
-static BOOL CALLBACK DarkEnumChildProc(HWND hWnd, LPARAM lParam)
+static BOOL CALLBACK DarkEnumChildProc(HWND hWnd, LPARAM lParam) noexcept
 {
 	const auto& p = *reinterpret_cast<DarkModeParams*>(lParam);
 	const std::wstring className = dmlib_subclass::getWndClassName(hWnd);
@@ -2975,7 +2975,7 @@ void dmlib::setDarkListView(HWND hWnd)
  * otherwise falls back to `VSCLASS_BUTTON`.
  *
  * @param[in]   hWnd          Handle to the control to change checkbox style.
- * @param[in]   ImgList       Handle to the image list of control containing checkbox state images.
+ * @param[in]   hImgList      Handle to the image list of control containing checkbox state images.
  * @param[in]   viewCheckbox  Type of checkbox style.
  *
  * @note Does nothing on pre-Windows 11 systems.
@@ -3416,7 +3416,7 @@ void dmlib::calculateTreeViewStyle()
 	static constexpr double middle = 50.0;
 
 	if (const COLORREF bgColor = dmlib::getViewBackgroundColor();
-		g_dmCfg.m_tvBackground != bgColor || g_dmCfg.m_lightness == middle)
+		g_dmCfg.m_tvBackground != bgColor || (g_dmCfg.m_lightness - middle) == 0.0)
 	{
 		g_dmCfg.m_lightness = dmlib::calculatePerceivedLightness(bgColor);
 		g_dmCfg.m_tvBackground = bgColor;
@@ -4071,7 +4071,7 @@ static HRESULT CALLBACK DarkTaskDlgMsgBoxCallback(
 	[[maybe_unused]] WPARAM wParam,
 	[[maybe_unused]] LPARAM lParam,
 	[[maybe_unused]] LONG_PTR lpRefData
-)
+) noexcept
 {
 	const auto uType = static_cast<UINT>(lpRefData);
 
@@ -4134,7 +4134,14 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 {
 	// base config
 
+#if defined(_MSC_VER)
+	#pragma warning(push)
+	#pragma warning(disable: 26476) // Expression/symbol 'name' uses a naked union 'union' with multiple type pointers: Use variant instead (type.7)
+#endif
 	TASKDIALOGCONFIG tdc{};
+#if defined(_MSC_VER)
+	#pragma warning(pop)
+#endif
 	tdc.cbSize = sizeof(TASKDIALOGCONFIG);
 	tdc.hwndParent = hWnd;
 	tdc.hInstance = nullptr;
@@ -4186,7 +4193,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 				{ IDIGNORE, L"&Ignore" }
 			} };
 
-			tdc.cButtons = static_cast<UINT>(buttons.size());;
+			tdc.cButtons = static_cast<UINT>(buttons.size());
 			tdc.pButtons = buttons.data();
 			tdc.nDefaultButton = getDefBtn({ { buttons.at(0).nButtonID, buttons.at(1).nButtonID, buttons.at(2).nButtonID } });
 
@@ -4222,7 +4229,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 				{ IDCONTINUE, L"&Continue" }
 			} };
 
-			tdc.cButtons = static_cast<UINT>(buttons.size());;
+			tdc.cButtons = static_cast<UINT>(buttons.size());
 			tdc.pButtons = buttons.data();
 			tdc.nDefaultButton = getDefBtn({ { buttons.at(0).nButtonID, buttons.at(1).nButtonID, buttons.at(2).nButtonID } });
 

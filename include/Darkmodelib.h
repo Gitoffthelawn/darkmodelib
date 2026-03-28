@@ -41,8 +41,17 @@
 	#define DMLIB_API
 #endif
 
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	// identifier '_TASKDIALOGCONFIG' is reserved because it starts with '_' followed by a capital letter
+	#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 typedef struct _TASKDIALOGCONFIG TASKDIALOGCONFIG; // forward declaration, from <CommCtrl.h>
 
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#endif
 /**
  * @namespace dmlib
  * @brief Provides dark mode theming, subclassing, and rendering utilities for most Win32 controls.

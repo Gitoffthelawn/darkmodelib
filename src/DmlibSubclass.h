@@ -374,12 +374,15 @@ namespace dmlib_subclass
 	 * @note The maximum length is capped at 32 characters (including the null terminator),
 	 *       which suffices for standard Windows window classes.
 	 */
-	[[nodiscard]] inline std::wstring getWndClassName(HWND hWnd)
+	[[nodiscard]] inline std::wstring getWndClassName(HWND hWnd) noexcept
 	{
 		static constexpr int strLen = 32;
-		std::wstring className(strLen, L'\0');
-		className.resize(static_cast<size_t>(::GetClassNameW(hWnd, className.data(), strLen)));
-		return className;
+		auto className = std::wstring(strLen, L'\0');
+		if (::GetClassNameW(hWnd, className.data(), strLen) < strLen)
+		{
+			return className.c_str(); // remove extra nulls
+		}
+		return L"";
 	}
 
 	/**
@@ -395,7 +398,7 @@ namespace dmlib_subclass
 	 *
 	 * @see dmlib_subclass::getWndClassName()
 	 */
-	[[nodiscard]] inline bool cmpWndClassName(HWND hWnd, const wchar_t* classNameToCmp)
+	[[nodiscard]] inline bool cmpWndClassName(HWND hWnd, const wchar_t* classNameToCmp) noexcept
 	{
 		if (!hWnd)
 		{

@@ -360,7 +360,7 @@ LRESULT CALLBACK dmlib_subclass::ButtonSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pButtonData = reinterpret_cast<ButtonData*>(dwRefData);
 	auto& themeData = pButtonData->m_themeData;
@@ -614,7 +614,7 @@ LRESULT CALLBACK dmlib_subclass::GroupboxSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pButtonData = reinterpret_cast<ButtonData*>(dwRefData);
 	auto& themeData = pButtonData->m_themeData;
@@ -1038,7 +1038,7 @@ LRESULT CALLBACK dmlib_subclass::UpDownSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pUpDownData = reinterpret_cast<UpDownData*>(dwRefData);
 	auto& themeData = pUpDownData->m_themeData;
@@ -1098,7 +1098,7 @@ LRESULT CALLBACK dmlib_subclass::UpDownSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<UpDownData>(*pUpDownData, hdc, ps,
-				[&]() { paintUpDown(hWnd, hMemDC, *pUpDownData); },
+				[&]() noexcept { paintUpDown(hWnd, hMemDC, *pUpDownData); },
 				rcClient);
 
 			::EndPaint(hWnd, &ps);
@@ -1348,7 +1348,7 @@ LRESULT CALLBACK dmlib_subclass::TabPaintSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pTabData = reinterpret_cast<TabData*>(dwRefData);
 	const auto& hMemDC = pTabData->m_bufferData.getHMemDC();
@@ -1403,7 +1403,7 @@ LRESULT CALLBACK dmlib_subclass::TabPaintSubclass(
 			RECT rcClient{};
 			::GetClientRect(hWnd, &rcClient);
 			dmlib_paint::PaintWithBuffer<TabData>(*pTabData, hdc, ps,
-				[&]() { paintTab(hWnd, hMemDC, rcClient); },
+				[&]() noexcept { paintTab(hWnd, hMemDC, rcClient); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);
@@ -1449,7 +1449,7 @@ LRESULT CALLBACK dmlib_subclass::TabUpDownSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -1565,7 +1565,7 @@ LRESULT CALLBACK dmlib_subclass::CustomBorderSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pBorderMetricsData = reinterpret_cast<BorderMetricsData*>(dwRefData);
 
@@ -1679,7 +1679,7 @@ LRESULT CALLBACK dmlib_subclass::CustomBorderSubclass(
  * @see ComboBoxData
  * @see paintComboBox()
  */
-static int getComboBoxStateAndRect(HWND hWnd, RECT& rcClient)
+static int getComboBoxStateAndRect(HWND hWnd, RECT& rcClient) noexcept
 {
 	::GetClientRect(hWnd, &rcClient);
 
@@ -1980,7 +1980,7 @@ static void renderComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& com
  * @see renderComboBoxEdit()
  * @see renderComboBoxList()
  */
-static void paintComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData)
+static void paintComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData) noexcept
 {
 	RECT rcClient{};
 	const int iStateID = getComboBoxStateAndRect(hWnd, rcClient);
@@ -2061,7 +2061,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pComboboxData = reinterpret_cast<ComboBoxData*>(dwRefData);
 	auto& themeData = pComboboxData->m_themeData;
@@ -2113,7 +2113,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 				}
 
 				dmlib_paint::PaintWithBuffer<ComboBoxData>(*pComboboxData, hdc, ps,
-					[&]() { paintComboBox(hWnd, hMemDC, *pComboboxData); },
+					[&]() noexcept { paintComboBox(hWnd, hMemDC, *pComboboxData); },
 					hWnd);
 			}
 			else
@@ -2178,7 +2178,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxExSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -2317,7 +2317,7 @@ LRESULT CALLBACK dmlib_subclass::ListViewSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -2645,7 +2645,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pHeaderData = reinterpret_cast<HeaderData*>(dwRefData);
 	auto& themeData = pHeaderData->m_themeData;
@@ -2692,7 +2692,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<HeaderData>(*pHeaderData, hdc, ps,
-				[&]() { paintHeader(hWnd, hMemDC, *pHeaderData); },
+				[&]() noexcept { paintHeader(hWnd, hMemDC, *pHeaderData); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);
@@ -2928,7 +2928,7 @@ LRESULT CALLBACK dmlib_subclass::StatusBarSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pStatusBarData = reinterpret_cast<StatusBarData*>(dwRefData);
 	auto& themeData = pStatusBarData->m_themeData;
@@ -2975,7 +2975,7 @@ LRESULT CALLBACK dmlib_subclass::StatusBarSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<StatusBarData>(*pStatusBarData, hdc, ps,
-				[&]() { paintStatusBar(hWnd, hMemDC, *pStatusBarData); },
+				[&]() noexcept { paintStatusBar(hWnd, hMemDC, *pStatusBarData); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);
@@ -3129,7 +3129,7 @@ LRESULT CALLBACK dmlib_subclass::ProgressBarSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pProgressBarData = reinterpret_cast<ProgressBarData*>(dwRefData);
 	auto& themeData = pProgressBarData->m_themeData;
@@ -3176,7 +3176,7 @@ LRESULT CALLBACK dmlib_subclass::ProgressBarSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<ProgressBarData>(*pProgressBarData, hdc, ps,
-				[&]() { paintProgressBar(hWnd, hMemDC, *pProgressBarData); },
+				[&]() noexcept { paintProgressBar(hWnd, hMemDC, *pProgressBarData); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);
@@ -3230,7 +3230,7 @@ LRESULT CALLBACK dmlib_subclass::StaticTextSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pStaticTextData = reinterpret_cast<StaticTextData*>(dwRefData);
 
@@ -3344,7 +3344,7 @@ LRESULT CALLBACK dmlib_subclass::IPAddressSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -3426,7 +3426,7 @@ LRESULT CALLBACK dmlib_subclass::HotKeySubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -3492,7 +3492,7 @@ LRESULT CALLBACK dmlib_subclass::DTPSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{

@@ -58,7 +58,7 @@ LRESULT CALLBACK dmlib_subclass::WindowEraseBgSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -96,7 +96,7 @@ LRESULT CALLBACK dmlib_subclass::WindowEraseBgSubclass(
  * @param[in]   lParam      Message-specific data to get child HWND.
  * @return The brush handle as LRESULT for background painting.
  */
-static LRESULT onCtlColorStaticHelper(LPARAM lParam, WPARAM wParam)
+static LRESULT onCtlColorStaticHelper(LPARAM lParam, WPARAM wParam) noexcept
 {
 	auto* hdc = reinterpret_cast<HDC>(wParam);
 	auto hChild = reinterpret_cast<HWND>(lParam);
@@ -158,7 +158,7 @@ LRESULT CALLBACK dmlib_subclass::WindowCtlColorSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -273,7 +273,7 @@ LRESULT CALLBACK dmlib_subclass::WindowCtlColorSubclass(
 	::SendMessage(lptbcd->nmcd.hdr.hwndFrom, TB_GETBUTTONINFO, lptbcd->nmcd.dwItemSpec, reinterpret_cast<LPARAM>(&tbi));
 
 	const bool isIcon = tbi.iImage != I_IMAGENONE;
-	const bool isDropDown = ((WORD{ tbi.fsStyle } & BTNS_DROPDOWN) == BTNS_DROPDOWN) && isIcon; // has 2 "buttons"
+	const bool isDropDown = ((static_cast<WORD>(tbi.fsStyle) & BTNS_DROPDOWN) == BTNS_DROPDOWN) && isIcon; // has 2 "buttons"
 	if (isDropDown)
 	{
 		const auto idx = ::SendMessage(lptbcd->nmcd.hdr.hwndFrom, TB_COMMANDTOINDEX, lptbcd->nmcd.dwItemSpec, 0);
@@ -496,7 +496,14 @@ static void prepaintListViewItem(LPNMLVCUSTOMDRAW& lplvcd, bool isReport, bool h
 
 			for (int i = 1; i < nCol; ++i)
 			{
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-qual" // cast from 'const type *' to 'type *' drops const
+#endif
 				ListView_GetItemIndexRect(hList, &lvii, i, LVIR_BOUNDS, &rcSubitem);
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 				rcSubitem.left -= paddingLeft;
 				rcSubitem.right -= paddingRight;
 				::FillRect(lplvcd->nmcd.hdc, &rcSubitem, hBrush);
@@ -949,7 +956,7 @@ static void postpaintTreeViewItem(const LPNMTVCUSTOMDRAW& lptvcd) noexcept
  *
  * @see dmlib_subclass::WindowNotifySubclass()
  */
-static LRESULT onNotifyCustomDrawOrDTPDropDown(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT onNotifyCustomDrawOrDTPDropDown(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
 	auto* lpnmhdr = reinterpret_cast<LPNMHDR>(lParam);
 	if (lpnmhdr->code == NM_CUSTOMDRAW)
@@ -1033,7 +1040,7 @@ LRESULT CALLBACK dmlib_subclass::WindowNotifySubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -1105,7 +1112,7 @@ static void paintMenuBar(HWND hWnd, HDC hdc) noexcept
  *
  * @see dmlib_subclass::WindowMenuBarSubclass()
  */
-static void paintMenuBarItems(UAHDRAWMENUITEM& UDMI, const HTHEME& hTheme)
+static void paintMenuBarItems(UAHDRAWMENUITEM& UDMI, const HTHEME& hTheme) noexcept
 {
 	// get the menu item string
 	std::wstring buffer(MAX_PATH, L'\0');
@@ -1277,7 +1284,7 @@ LRESULT CALLBACK dmlib_subclass::WindowMenuBarSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pMenuThemeData = reinterpret_cast<ThemeData*>(dwRefData);
 
@@ -1367,7 +1374,7 @@ LRESULT CALLBACK dmlib_subclass::WindowSettingChangeSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -1494,7 +1501,7 @@ static LRESULT CALLBACK DarkTaskDlgSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pTaskDlgData = reinterpret_cast<TaskDlgData*>(dwRefData);
 
