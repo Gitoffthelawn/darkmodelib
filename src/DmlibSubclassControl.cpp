@@ -1167,6 +1167,7 @@ LRESULT CALLBACK dmlib_subclass::UpDownSubclass(
  * @param[in]   rcItem          Rectangle defining the area of the tab item.
  * @param[in]   i               Index of the tab item being painted.
  * @param[in]   iSelTab         Index of the currently selected tab.
+ * @param[in]   nTabs           Total number of tabs in the tab control.
  * @param[in]   ptCursor        Point representing the current cursor position.
  */
 static void paintTabItem(
@@ -1175,6 +1176,7 @@ static void paintTabItem(
 	RECT& rcItem,
 	int i,
 	int iSelTab,
+	int nTabs,
 	const POINT& ptCursor
 ) noexcept
 {
@@ -1215,15 +1217,19 @@ static void paintTabItem(
 		{
 			::OffsetRect(&rcText, 0, -1);
 			rcFrame.bottom += 1;
+			rcFrame.left -= 2;
 		}
 		else
 		{
 			rcFrame.top += paddingTop;
+			rcFrame.left -= 1;
 		}
 
-		if (((nStyle & TCS_MULTILINE) != TCS_MULTILINE) && i != 0)
+		const bool isMultiLine = ((nStyle & TCS_MULTILINE) == TCS_MULTILINE);
+		if (const bool isOneLine = isMultiLine ? TabCtrl_GetRowCount(hWnd) == 1 : true;
+			isOneLine && i != nTabs - 1)
 		{
-			rcFrame.left -= 1;
+			rcFrame.right += 1;
 		}
 	}
 
@@ -1239,20 +1245,7 @@ static void paintTabItem(
 		rcText.left += cx;
 	}
 
-	const auto hbrSel = [&isSelectedTab, &isHot]() noexcept
-	{
-		if (isSelectedTab)
-		{
-			return dmlib::getCtrlBackgroundBrush();
-		}
-		if (isHot)
-		{
-			return dmlib::getHotBackgroundBrush();
-		}
-		return dmlib::getDlgBackgroundBrush();
-	}();
-
-	dmlib_paint::paintRect(hdc, rcFrame, dmlib::getEdgePen(), hbrSel);
+	dmlib_paint::paintRect(hdc, rcFrame, dmlib::getEdgePen(), getBrushFromState(isSelectedTab, isHot));
 
 	if (dmlib::isAtLeastWindows11() && isSelectedTab)
 	{
@@ -1301,6 +1294,8 @@ static void paintTabItem(
  */
 static void paintTab(HWND hWnd, HDC hdc, const RECT& rect) noexcept
 {
+	::FillRect(hdc, &rect, dmlib::getDlgBackgroundBrush());
+
 	const auto iSelTab = TabCtrl_GetCurSel(hWnd);
 	const auto nTabs = TabCtrl_GetItemCount(hWnd);
 
@@ -1315,10 +1310,11 @@ static void paintTab(HWND hWnd, HDC hdc, const RECT& rect) noexcept
 	RECT rcSelTab{};
 	TabCtrl_GetItemRect(hWnd, iTab, &rcSelTab);
 
-	RECT rcTabs{ rect.left, rect.top, rect.right, rcSelTab.bottom - 1 };
-	::FillRect(hdc, &rcTabs, dmlib::getDlgBackgroundBrush());
+	::ExcludeClipRect(hdc, rcSelTab.left, rcSelTab.top, rcSelTab.right, rcSelTab.bottom);
+
+	static const int roundness = dmlib::isAtLeastWindows11() ? dmlib_paint::kWin11CornerRoundness : 0;
 	RECT rcCont{ rect.left, rcSelTab.bottom - 1, rect.right, rect.bottom };
-	::FillRect(hdc, &rcCont, dmlib::getCtrlBackgroundBrush());
+	dmlib_paint::paintRoundFrameRect(hdc, rcCont, dmlib::getEdgePen(), roundness, roundness);
 
 	const auto hPen = dmlib_paint::GdiObject{ hdc, dmlib::getEdgePen(), true };
 	const auto hFont = dmlib_paint::GdiObject{ hdc, hWnd };
@@ -1347,18 +1343,15 @@ static void paintTab(HWND hWnd, HDC hdc, const RECT& rect) noexcept
 			continue; // Skip to the next iteration when there is no intersection
 		}
 
-		RECT rcTmp{ rcItem.left - 1, rcItem.top, rcItem.right, rcItem.bottom };
+		RECT rcTmp{ rcItem.left - 2, rcItem.top, rcItem.right, rcItem.bottom };
 		HRGN hClip = ::CreateRectRgnIndirect(&rcTmp);
 		::SelectClipRgn(hdc, hClip);
 
-		paintTabItem(hdc, hWnd, rcItem, i, iSelTab, ptCursor);
+		paintTabItem(hdc, hWnd, rcItem, i, iSelTab, nTabs, ptCursor);
 
 		::SelectClipRgn(hdc, holdClip);
 		::DeleteObject(hClip);
 	}
-
-	::ExcludeClipRect(hdc, rcSelTab.left, rcSelTab.top, rcSelTab.right, rcSelTab.bottom);
-	dmlib_paint::paintFrameRect(hdc, rcCont, dmlib::getEdgePen());
 
 	::SelectClipRgn(hdc, holdClip);
 	if (holdClip != nullptr)
