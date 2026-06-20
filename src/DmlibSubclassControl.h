@@ -141,10 +141,10 @@ namespace dmlib_subclass
 
 		UpDownData() = delete;
 
-		explicit UpDownData(HWND hWnd)
+		explicit UpDownData(HWND hWnd) noexcept
 			: m_cornerRoundness(
 				(dmlib_win32api::IsWindows11()
-					&& dmlib_subclass::cmpWndClassName(::GetParent(hWnd), WC_TABCONTROL))
+					&& dmlib_subclass::WndClassName::cmpWndClassName(::GetParent(hWnd), WC_TABCONTROL))
 				? (dmlib_paint::kWin11CornerRoundness + 1)
 				: 0)
 			, m_isHorizontal((::GetWindowLongPtrW(hWnd, GWL_STYLE)& UDS_HORZ) == UDS_HORZ)
@@ -248,8 +248,8 @@ namespace dmlib_subclass
 
 		BorderMetricsData() = delete;
 
-		explicit BorderMetricsData(HWND hWnd)
-			: m_isEdit(dmlib_subclass::cmpWndClassName(hWnd, WC_EDIT))
+		explicit BorderMetricsData(HWND hWnd) noexcept
+			: m_isEdit(dmlib_subclass::WndClassName::cmpWndClassName(hWnd, WC_EDIT))
 		{
 			setMetricsForDpi(dmlib_dpi::GetDpiForParent(hWnd));
 		}
@@ -342,9 +342,9 @@ namespace dmlib_subclass
 
 		HeaderData() = delete;
 
-		explicit HeaderData(HWND hWnd)
+		explicit HeaderData(HWND hWnd) noexcept
 			: m_hasBtnStyle((::GetWindowLongPtr(hWnd, GWL_STYLE) & HDS_BUTTONS) == HDS_BUTTONS)
-			, m_isLVChild(dmlib_subclass::cmpWndClassName(::GetParent(hWnd), WC_LISTVIEW))
+			, m_isLVChild(dmlib_subclass::WndClassName::cmpWndClassName(::GetParent(hWnd), WC_LISTVIEW))
 		{}
 	};
 
@@ -438,13 +438,13 @@ namespace dmlib_subclass
 	LRESULT CALLBACK ButtonSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK GroupboxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK UpDownSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
-	LRESULT CALLBACK TabPaintSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-	LRESULT CALLBACK TabUpDownSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	LRESULT CALLBACK TabPaintSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
+	LRESULT CALLBACK TabUpDownSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 	LRESULT CALLBACK CustomBorderSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 	LRESULT CALLBACK ComboBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK ComboBoxExSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 	LRESULT CALLBACK ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
-	LRESULT CALLBACK HeaderSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	LRESULT CALLBACK HeaderSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 	LRESULT CALLBACK StatusBarSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK ProgressBarSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 	LRESULT CALLBACK StaticTextSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;

@@ -923,11 +923,20 @@ static void paintArrow(
 	const auto yPos = static_cast<float>(rect.top) + ((static_cast<float>(rect.bottom - rect.top) - sizeArrow.y - offsetPosY) / 2.0F);
 
 	std::array<POINT, 3> ptsArrow{};
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 26446) // Prefer to use gsl::at() instead of unchecked subscript operator (bounds.4).
+#pragma warning(disable: 26482) // Only index into arrays using constant expressions.
+#endif
 	for (size_t i = 0; i < 3; ++i)
 	{
-		ptsArrow.at(i).x = static_cast<LONG>((ptsArrowSelected.at(i).x * sizeArrow.x) + xPos);
-		ptsArrow.at(i).y = static_cast<LONG>((ptsArrowSelected.at(i).y * sizeArrow.y) + yPos);
+		ptsArrow[i].x = static_cast<LONG>((ptsArrowSelected[i].x * sizeArrow.x) + xPos); // NOLINT(cppcoreguidelines-pro-bounds-*)
+		ptsArrow[i].y = static_cast<LONG>((ptsArrowSelected[i].y * sizeArrow.y) + yPos); // NOLINT(cppcoreguidelines-pro-bounds-*)
 	}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 	const auto hBrush = dmlib_paint::GdiObject{ hdc, ::CreateSolidBrush(clr) };
 	const auto hPen = dmlib_paint::GdiObject{ hdc, ::CreatePen(PS_SOLID, 1, clr) };
@@ -1314,7 +1323,7 @@ static void paintTabItem(
 	int iSelTab,
 	int nTabs,
 	const POINT& ptCursor
-)
+) noexcept
 {
 	RECT rcFrame{ rcItem };
 
@@ -1325,7 +1334,7 @@ static void paintTabItem(
 	::InflateRect(&rcItem, -1, -1);
 	rcItem.right += 1;
 
-	auto buffer = std::wstring(MAX_PATH, L'\0'); // label
+	auto buffer = std::array<wchar_t, MAX_PATH>{}; // label
 	TCITEMW tci{};
 	tci.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_STATE;
 	tci.dwStateMask = TCIS_HIGHLIGHTED;
@@ -1404,7 +1413,7 @@ static void paintTabItem(
 		dmlib_paint::paintRect(hdc, rcHighlightLine, dmlib::getHighlightPen(), dmlib::getHighlightBrush());
 	}
 
-	::DrawText(hdc, buffer.c_str(), -1, &rcText, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	::DrawText(hdc, tci.pszText, -1, &rcText, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	// Draw focus keyboard cue
 	if (!isSelectedTab || ::GetFocus() != hWnd)
@@ -1444,7 +1453,7 @@ static void paintTabItem(
  * @param[in]   hdc     Device context to draw into.
  * @param[in]   rect    Tab control rectangle.
  */
-static void paintTab(HWND hWnd, HDC hdc, const RECT& rect)
+static void paintTab(HWND hWnd, HDC hdc, const RECT& rect) noexcept
 {
 	::FillRect(hdc, &rect, dmlib::getDlgBackgroundBrush());
 
@@ -1558,7 +1567,7 @@ LRESULT CALLBACK dmlib_subclass::TabPaintSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pTabData = reinterpret_cast<TabData*>(dwRefData);
 	const auto& hMemDC = pTabData->m_bufferData.getHMemDC();
@@ -1613,7 +1622,7 @@ LRESULT CALLBACK dmlib_subclass::TabPaintSubclass(
 			RECT rcClient{};
 			::GetClientRect(hWnd, &rcClient);
 			dmlib_paint::PaintWithBuffer<TabData>(*pTabData, hdc, ps,
-				[&]() { paintTab(hWnd, hMemDC, rcClient); },
+				[&]() noexcept { paintTab(hWnd, hMemDC, rcClient); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);
@@ -1659,7 +1668,7 @@ LRESULT CALLBACK dmlib_subclass::TabUpDownSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -1674,7 +1683,7 @@ LRESULT CALLBACK dmlib_subclass::TabUpDownSubclass(
 			if (LOWORD(wParam) == WM_CREATE)
 			{
 				auto hUpDown = reinterpret_cast<HWND>(lParam);
-				if (dmlib_subclass::cmpWndClassName(hUpDown, UPDOWN_CLASS))
+				if (dmlib_subclass::WndClassName::cmpWndClassName(hUpDown, UPDOWN_CLASS))
 				{
 					dmlib::setUpDownCtrlSubclass(hUpDown);
 					return 0;
@@ -1732,8 +1741,9 @@ static void ncPaintCustomBorder(HWND hWnd, const dmlib_subclass::BorderMetricsDa
 
 	const bool isHot = ::PtInRect(&rcClient, ptCursor) == TRUE;
 	const bool hasFocus = ::GetFocus() == hWnd;
+	const bool isEditReadOnly = borderMetricsData.m_isEdit && (nStyle & ES_READONLY) == ES_READONLY;
 
-	const HPEN hEnabledPen = ((borderMetricsData.m_isHot && isHot) || hasFocus ? dmlib::getHotEdgePen() : dmlib::getEdgePen());
+	const HPEN hEnabledPen = (!isEditReadOnly && ((borderMetricsData.m_isHot && isHot) || hasFocus)) ? dmlib::getHotEdgePen() : dmlib::getEdgePen();
 
 	static const int roundness = dmlib::isAtLeastWindows11() ? dmlib_paint::kWin11CornerRoundness : 0;
 	dmlib_paint::paintRoundRect(
@@ -2690,7 +2700,7 @@ static void paintHeaderItem(
 	RECT& rcItem,
 	bool hasGridlines,
 	const DTTOPTS& dtto
-)
+) noexcept
 {
 	const HTHEME& hTheme = headerData.m_themeData.getHTheme();
 
@@ -2713,7 +2723,7 @@ static void paintHeaderItem(
 		::FillRect(hdc, &rcTmp, dmlib::getHeaderHotBackgroundBrush());
 	}
 
-	auto buffer = std::wstring(MAX_PATH, L'\0');
+	auto buffer = std::array<wchar_t, MAX_PATH>{};
 	HDITEM hdi{};
 	hdi.mask = HDI_TEXT | HDI_FORMAT;
 	hdi.pszText = buffer.data();
@@ -2803,7 +2813,7 @@ static void paintHeaderItem(
  * @see HeaderData
  * @see paintHeaderItem()
  */
-static void paintHeader(HWND hWnd, HDC hdc, dmlib_subclass::HeaderData& headerData)
+static void paintHeader(HWND hWnd, HDC hdc, dmlib_subclass::HeaderData& headerData) noexcept
 {
 	auto& themeData = headerData.m_themeData;
 	const auto& hTheme = themeData.getHTheme();
@@ -2900,7 +2910,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pHeaderData = reinterpret_cast<HeaderData*>(dwRefData);
 	auto& themeData = pHeaderData->m_themeData;
@@ -2947,7 +2957,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<HeaderData>(*pHeaderData, hdc, ps,
-				[&]() { paintHeader(hWnd, hMemDC, *pHeaderData); },
+				[&]() noexcept { paintHeader(hWnd, hMemDC, *pHeaderData); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);

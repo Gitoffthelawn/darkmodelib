@@ -19,12 +19,16 @@
 #include <algorithm>
 #include <array>
 #include <memory>
-#include <string>
 #include <string_view>
 #include <type_traits>
 
 namespace dmlib_subclass
 {
+	/**
+	 * @brief Maximum Length of buffer for class name.
+	 */
+	inline constexpr int kMaxClassNameLen = 32;
+
 	/**
 	 * @brief Defines control subclass ID values.
 	 */
@@ -225,7 +229,7 @@ namespace dmlib_subclass
 		}
 
 	private:
-		std::array<wchar_t, 32> m_themeClass{};
+		std::array<wchar_t, kMaxClassNameLen> m_themeClass{};
 		HTHEME m_hTheme = nullptr;
 	};
 
@@ -368,46 +372,53 @@ namespace dmlib_subclass
 	};
 
 	/**
-	 * @brief Retrieves the class name of a given window.
-	 *
-	 * This function wraps the Win32 API `GetClassNameW` to return the class name
-	 * of a window as a wide string (`std::wstring`).
-	 *
-	 * @param[in] hWnd Handle to the target window.
-	 * @return The class name of the window as a `std::wstring`.
-	 *
-	 * @note The maximum length is capped at 32 characters (including the null terminator),
-	 *       which suffices for standard Windows window classes.
+	 * @class WndClassName
+	 * @brief Helper class for checking window class name.
 	 */
-	[[nodiscard]] inline std::wstring getWndClassName(HWND hWnd)
+	class WndClassName
 	{
-		static constexpr int strLen = 32;
-		auto className = std::wstring(strLen, L'\0');
-		className.resize(static_cast<size_t>(::GetClassNameW(hWnd, className.data(), strLen)));
-		return className;
-	}
+	public:
+		explicit WndClassName(HWND hWnd) noexcept
+			: m_length(static_cast<size_t>(::GetClassNameW(hWnd, m_className.data(), static_cast<int>(m_className.size()))))
+			, m_view(m_className.data(), m_length)
+		{}
 
-	/**
-	 * @brief Compares the class name of a window with a specified string.
-	 *
-	 * This function retrieves the class name of the given window handle
-	 * and compares it to the provided class name.
-	 *
-	 * @param[in]   hWnd            Handle to the window whose class name is to be checked.
-	 * @param[in]   classNameToCmp  Pointer to a null-terminated wide string representing the class name to compare against.
-	 * @return `true` if the window's class name matches the specified string.
-	 * @return `false` otherwise.
-	 *
-	 * @see dmlib_subclass::getWndClassName()
-	 */
-	[[nodiscard]] inline bool cmpWndClassName(HWND hWnd, const wchar_t* classNameToCmp)
-	{
-		if (hWnd == nullptr)
+		[[nodiscard]] bool operator==(const wchar_t* classNameToCmp) const noexcept
 		{
-			return false;
+			return m_view == classNameToCmp;
 		}
-		return (dmlib_subclass::getWndClassName(hWnd) == classNameToCmp);
-	}
+
+		/**
+		 * @brief Compares the class name of a window with a specified string.
+		 *
+		 * This function retrieves the class name of the given window handle
+		 * and compares it to the provided class name.
+		 *
+		 * @param[in]   hWnd            Handle to the window whose class name is to be checked.
+		 * @param[in]   classNameToCmp  Pointer to a null-terminated wide string representing the class name to compare against.
+		 * @return `true` if the window's class name matches the specified string.
+		 * @return `false` otherwise.
+		 */
+		[[nodiscard]] static bool cmpWndClassName(HWND hWnd, const wchar_t* classNameToCmp) noexcept
+		{
+			if (hWnd == nullptr)
+			{
+				return false;
+			}
+
+			const auto wndClassName = WndClassName(hWnd);
+			if (wndClassName.m_length == 0)
+			{
+				return false;
+			}
+			return (wndClassName.m_view == classNameToCmp);
+		}
+
+	private:
+		std::array<wchar_t, kMaxClassNameLen> m_className{};
+		size_t m_length = 0;
+		std::wstring_view m_view;
+	};
 
 	/// Determines if themed styling should be preferred over subclassing.
 	[[nodiscard]] bool isThemePrefered() noexcept;

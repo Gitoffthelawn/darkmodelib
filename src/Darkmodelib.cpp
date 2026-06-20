@@ -30,7 +30,10 @@
 
 #include <array>
 #include <cstdint>
+
+#ifndef _DARKMODELIB_NO_INI_CONFIG
 #include <string>
+#endif
 
 #include "DmlibColor.h"
 #include "DmlibDpi.h"
@@ -1533,7 +1536,7 @@ static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
 	{
 		if (HWND hParent = ::GetParent(hWnd);
 			hParent == nullptr
-			|| dmlib_subclass::getWndClassName(hParent) != WC_COMBOBOXEX)
+			|| !dmlib_subclass::WndClassName::cmpWndClassName(hParent, WC_COMBOBOXEX))
 		{
 			dmlib::setComboBoxCtrlSubclass(hWnd);
 		}
@@ -1544,7 +1547,7 @@ static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
 		if (HWND hParent = ::GetParent(hWnd);
 			doesWin11SupportDarkThemeStyle()
 			&& (hParent == nullptr
-				|| dmlib_subclass::getWndClassName(hParent) != WC_COMBOBOXEX))
+				|| !dmlib_subclass::WndClassName::cmpWndClassName(hParent, WC_COMBOBOXEX)))
 		{
 			dmlib::setDarkThemeTheme(hWnd);
 		}
@@ -2273,7 +2276,7 @@ static void setMonthCalendarCtrlTheme(HWND hWnd, DarkModeParams p) noexcept
 static BOOL CALLBACK DarkEnumChildProc(HWND hWnd, LPARAM lParam)
 {
 	const auto& p = *reinterpret_cast<DarkModeParams*>(lParam);
-	const std::wstring className = dmlib_subclass::getWndClassName(hWnd);
+	const auto className = dmlib_subclass::WndClassName(hWnd);
 
 	if (className == WC_BUTTON)
 	{
@@ -4158,7 +4161,7 @@ static HRESULT CALLBACK DarkTaskDlgMsgBoxCallback(
  * @see DarkTaskDlgMsgBoxCallback()
  * @see dmlib::darkMessageBoxW()
  */
-static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType)
+static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) noexcept
 {
 	// base config
 
@@ -4183,18 +4186,27 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 
 	// buttons
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 26446) // Prefer to use gsl::at() instead of unchecked subscript operator (bounds.4).
+#pragma warning(disable: 26482) // Only index into arrays using constant expressions.
+#endif
+
+	// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
 	const UINT btnDefMask = uType & MB_DEFMASK;
-	auto getDefBtn = [&btnDefMask](std::array<int, 3> btnIDs)
+	static constexpr UINT maxBtns = 3;
+	auto getDefBtn = [&btnDefMask](std::array<int, maxBtns> btnIDs) noexcept
 	{
 		if (btnDefMask == MB_DEFBUTTON2)
 		{
-			return btnIDs.at(1);
+			return btnIDs[1];
 		}
 		if (btnDefMask == MB_DEFBUTTON3)
 		{
-			return btnIDs.at(2);
+			return btnIDs[2];
 		}
-		return btnIDs.at(0);
+		return btnIDs[0];
 	};
 
 	switch (uType & MB_TYPEMASK)
@@ -4214,7 +4226,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 
 		case MB_ABORTRETRYIGNORE:
 		{
-			static const std::array<TASKDIALOG_BUTTON, 3> buttons{ {
+			static const std::array<TASKDIALOG_BUTTON, maxBtns> buttons{ {
 				{ IDABORT, dmlib_win32api::MB_GetString(IDABORT) },
 				{ IDRETRY, dmlib_win32api::MB_GetString(IDRETRY) },
 				{ IDIGNORE, dmlib_win32api::MB_GetString(IDIGNORE) }
@@ -4222,7 +4234,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 
 			tdc.cButtons = static_cast<UINT>(buttons.size());
 			tdc.pButtons = buttons.data();
-			tdc.nDefaultButton = getDefBtn({ { buttons.at(0).nButtonID, buttons.at(1).nButtonID, buttons.at(2).nButtonID } });
+			tdc.nDefaultButton = getDefBtn({ { buttons[0].nButtonID, buttons[1].nButtonID, buttons[2].nButtonID } });
 
 			break;
 		}
@@ -4250,7 +4262,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 
 		case MB_CANCELTRYCONTINUE:
 		{
-			static const std::array<TASKDIALOG_BUTTON, 3> buttons{ {
+			static const std::array<TASKDIALOG_BUTTON, maxBtns> buttons{ {
 				{ IDCANCEL, dmlib_win32api::MB_GetString(IDCANCEL) },
 				{ IDTRYAGAIN, dmlib_win32api::MB_GetString(IDTRYAGAIN) },
 				{ IDCONTINUE, dmlib_win32api::MB_GetString(IDCONTINUE) }
@@ -4258,7 +4270,7 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 
 			tdc.cButtons = static_cast<UINT>(buttons.size());
 			tdc.pButtons = buttons.data();
-			tdc.nDefaultButton = getDefBtn({ { buttons.at(0).nButtonID, buttons.at(1).nButtonID, buttons.at(2).nButtonID } });
+			tdc.nDefaultButton = getDefBtn({ { buttons[0].nButtonID, buttons[1].nButtonID, buttons[2].nButtonID } });
 
 			break;
 		}
@@ -4269,6 +4281,12 @@ static TASKDIALOGCONFIG msgBoxParamToTaskDlgConfig(HWND hWnd, LPCWSTR lpText, LP
 			break;
 		}
 	}
+
+	// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 	// icons
 

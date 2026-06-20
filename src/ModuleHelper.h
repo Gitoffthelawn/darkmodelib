@@ -28,10 +28,10 @@ namespace dmlib_module
 		if (auto proc = ::GetProcAddress(handle, name);
 			proc != nullptr)
 		{
-#if (defined(_MSC_VER) && (_MSVC_LANG >= 202002L)) || (__cplusplus >= 202002L)
-			pointer = std::bit_cast<P>(proc);
-#else
 			static_assert(sizeof(P) == sizeof(proc));
+#if (defined(_MSC_VER) && (_MSVC_LANG >= 202002L)) || (__cplusplus >= 202002L)
+			pointer = std::bit_cast<P>(proc); // NOLINT(bugprone-bitwise-pointer-cast)
+#else
 			std::memcpy(&pointer, &proc, sizeof(P));
 #endif
 			return true;

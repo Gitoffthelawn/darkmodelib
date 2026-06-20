@@ -14,6 +14,8 @@
 
 #include "DmlibIni.h"
 
+#ifndef _DARKMODELIB_NO_INI_CONFIG
+
 #include <windows.h>
 
 #include <algorithm>
@@ -145,3 +147,5 @@ bool dmlib_ini::setClrFromIni(
 #ifdef __clang__
 	#pragma clang diagnostic pop
 #endif
+
+#endif // _DARKMODELIB_NO_INI_CONFIG

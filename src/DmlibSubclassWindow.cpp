@@ -22,7 +22,6 @@
 
 #include <array>
 #include <memory>
-#include <string>
 
 #include "Darkmodelib.h"
 
@@ -96,13 +95,13 @@ LRESULT CALLBACK dmlib_subclass::WindowEraseBgSubclass(
  * @param[in]   lParam      Message-specific data to get child HWND.
  * @return The brush handle as LRESULT for background painting.
  */
-static LRESULT onCtlColorStaticHelper(LPARAM lParam, WPARAM wParam)
+static LRESULT onCtlColorStaticHelper(LPARAM lParam, WPARAM wParam) noexcept
 {
 	auto* hdc = reinterpret_cast<HDC>(wParam);
 	auto hChild = reinterpret_cast<HWND>(lParam);
 
 	const bool isChildEnabled = ::IsWindowEnabled(hChild) == TRUE;
-	const std::wstring className = dmlib_subclass::getWndClassName(hChild);
+	const auto className = dmlib_subclass::WndClassName(hChild);
 
 	if (className == WC_EDIT)
 	{
@@ -158,7 +157,7 @@ LRESULT CALLBACK dmlib_subclass::WindowCtlColorSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -961,12 +960,12 @@ static LRESULT onNotifyCustomDrawOrDTPDropDown(
 	UINT uMsg,
 	WPARAM wParam,
 	LPARAM lParam
-)
+) noexcept
 {
 	auto* lpnmhdr = reinterpret_cast<LPNMHDR>(lParam);
 	if (lpnmhdr->code == NM_CUSTOMDRAW)
 	{
-		const std::wstring className = dmlib_subclass::getWndClassName(lpnmhdr->hwndFrom);
+		const auto className = dmlib_subclass::WndClassName(lpnmhdr->hwndFrom);
 
 		if (className == TOOLBARCLASSNAME)
 		{
@@ -994,7 +993,7 @@ static LRESULT onNotifyCustomDrawOrDTPDropDown(
 		}
 	}
 	else if (lpnmhdr->code == DTN_DROPDOWN
-		&& dmlib_subclass::cmpWndClassName(lpnmhdr->hwndFrom, DATETIMEPICK_CLASS))
+		&& dmlib_subclass::WndClassName::cmpWndClassName(lpnmhdr->hwndFrom, DATETIMEPICK_CLASS))
 	{
 		HWND hCal = DateTime_GetMonthCal(lpnmhdr->hwndFrom);
 		dmlib::setDarkMonthCalendar(hCal);
@@ -1045,7 +1044,7 @@ LRESULT CALLBACK dmlib_subclass::WindowNotifySubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	[[maybe_unused]] DWORD_PTR dwRefData
-)
+) noexcept
 {
 	switch (uMsg)
 	{
@@ -1117,10 +1116,10 @@ static void paintMenuBar(HWND hWnd, HDC hdc) noexcept
  *
  * @see dmlib_subclass::WindowMenuBarSubclass()
  */
-static void paintMenuBarItems(UAHDRAWMENUITEM& UDMI, const HTHEME& hTheme)
+static void paintMenuBarItems(UAHDRAWMENUITEM& UDMI, const HTHEME& hTheme) noexcept
 {
 	// get the menu item string
-	auto buffer = std::wstring(MAX_PATH, L'\0');
+	auto buffer = std::array<wchar_t, MAX_PATH>{};
 	MENUITEMINFO mii{};
 	mii.cbSize = sizeof(MENUITEMINFO);
 	mii.fMask = MIIM_STRING;
@@ -1224,7 +1223,7 @@ static void paintMenuBarItems(UAHDRAWMENUITEM& UDMI, const HTHEME& hTheme)
 		}
 	}
 
-	::DrawThemeTextEx(hTheme, UDMI.um.hdc, MENU_BARITEM, iTextStateID, buffer.c_str(), static_cast<int>(mii.cch), dwFlags, &UDMI.dis.rcItem, &dttopts);
+	::DrawThemeTextEx(hTheme, UDMI.um.hdc, MENU_BARITEM, iTextStateID, mii.dwTypeData, static_cast<int>(mii.cch), dwFlags, &UDMI.dis.rcItem, &dttopts);
 }
 
 /**
@@ -1289,7 +1288,7 @@ LRESULT CALLBACK dmlib_subclass::WindowMenuBarSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pMenuThemeData = reinterpret_cast<ThemeData*>(dwRefData);
 
@@ -1506,7 +1505,7 @@ static LRESULT CALLBACK DarkTaskDlgSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) noexcept
 {
 	auto* pTaskDlgData = reinterpret_cast<TaskDlgData*>(dwRefData);
 
@@ -1521,7 +1520,7 @@ static LRESULT CALLBACK DarkTaskDlgSubclass(
 
 		case WM_ERASEBKGND:
 		{
-			const std::wstring className = dmlib_subclass::getWndClassName(hWnd);
+			const auto className = dmlib_subclass::WndClassName(hWnd);
 
 			if (className == L"CtrlNotifySink")
 			{
@@ -1581,7 +1580,7 @@ static void setDarkTaskDlgSubclass(HWND hWnd)
  */
 static BOOL CALLBACK DarkTaskEnumChildProc(HWND hWnd, [[maybe_unused]] LPARAM lParam)
 {
-	const std::wstring className = dmlib_subclass::getWndClassName(hWnd);
+	const auto className = dmlib_subclass::WndClassName(hWnd);
 
 	if (className == L"CtrlNotifySink")
 	{
