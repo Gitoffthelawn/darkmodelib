@@ -88,6 +88,8 @@
     <ClInclude Include="..\src\DmlibSubclassWindow.h" />
     <ClInclude Include="..\src\DmlibWinApi.h" />
     <ClInclude Include="..\src\IatHook.h" />
+    <ClInclude Include="..\src\MemoryHelper.h" />
+    <ClInclude Include="..\src\MemoryHelperDef.h" />
     <ClInclude Include="..\src\ModuleHelper.h" />
     <ClInclude Include="..\src\StdAfx.h" />
     <ClInclude Include="..\src\UAHMenuBar.h" />

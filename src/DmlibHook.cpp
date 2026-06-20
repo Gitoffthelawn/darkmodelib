@@ -50,8 +50,8 @@ static auto ReplaceFunction(IMAGE_THUNK_DATA* addr, const P& newFunction) noexce
 		return nullptr;
 	}
 
-	const ULONGLONG oldFunction = addr->u1.Function;
-	addr->u1.Function = reinterpret_cast<ULONGLONG>(newFunction);
+	const UINT_PTR oldFunction = addr->u1.Function;
+	addr->u1.Function = reinterpret_cast<UINT_PTR>(newFunction);
 	::VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), oldProtect, &oldProtect);
 	return reinterpret_cast<P>(oldFunction);
 }

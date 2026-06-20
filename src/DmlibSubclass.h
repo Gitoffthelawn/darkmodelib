@@ -22,6 +22,11 @@
 #include <string_view>
 #include <type_traits>
 
+#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM == 0x001)
+#include "MemoryHelper.h"
+#endif
+#include "MemoryHelperDef.h"
+
 namespace dmlib_subclass
 {
 	/**
@@ -73,13 +78,13 @@ namespace dmlib_subclass
 	 * @return TRUE on success, FALSE on failure, -1 if subclass already set.
 	 */
 	template <typename T, typename Param>
-	inline auto SetSubclass(HWND hWnd, SUBCLASSPROC subclassProc, SubclassID subID, const Param& param) -> int
+	inline auto SetSubclass(HWND hWnd, SUBCLASSPROC subclassProc, SubclassID subID, const Param& param) DMLIB_MEM_NOEXCEPT -> int
 	{
 		if (const auto subclassID = static_cast<UINT_PTR>(subID);
 			::GetWindowSubclass(hWnd, subclassProc, subclassID, nullptr) == FALSE)
 		{
-			if (auto pData = std::make_unique<T>(param);
-				::SetWindowSubclass(hWnd, subclassProc, subclassID, reinterpret_cast<DWORD_PTR>(pData.get())) == TRUE)
+			if (auto pData = DMLIB_MEM_MAKE_UNIQUE<T>(param);
+				pData != nullptr && ::SetWindowSubclass(hWnd, subclassProc, subclassID, reinterpret_cast<DWORD_PTR>(pData.get())) == TRUE)
 			{
 				pData.release();
 				return TRUE;
@@ -101,13 +106,13 @@ namespace dmlib_subclass
 	 * @return TRUE on success, FALSE on failure, -1 if already subclassed.
 	 */
 	template <typename T>
-	inline auto SetSubclass(HWND hWnd, SUBCLASSPROC subclassProc, SubclassID subID) -> int
+	inline auto SetSubclass(HWND hWnd, SUBCLASSPROC subclassProc, SubclassID subID) DMLIB_MEM_NOEXCEPT -> int
 	{
 		if (const auto subclassID = static_cast<UINT_PTR>(subID);
 			::GetWindowSubclass(hWnd, subclassProc, subclassID, nullptr) == FALSE)
 		{
-			if (auto pData = std::make_unique<T>();
-				::SetWindowSubclass(hWnd, subclassProc, subclassID, reinterpret_cast<DWORD_PTR>(pData.get())) == TRUE)
+			if (auto pData = DMLIB_MEM_MAKE_UNIQUE<T>();
+				pData != nullptr && ::SetWindowSubclass(hWnd, subclassProc, subclassID, reinterpret_cast<DWORD_PTR>(pData.get())) == TRUE)
 			{
 				pData.release();
 				return TRUE;

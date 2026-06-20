@@ -46,6 +46,8 @@
 #include "DmlibSubclassWindow.h"
 #include "DmlibWinApi.h"
 
+#include "MemoryHelperDef.h"
+
 #include "Version.h"
 
 /**
@@ -130,6 +132,15 @@ int dmlib::getLibInfo(int libInfoType)
 		{
 #ifdef _DARKMODELIB_USE_SCROLLBAR_FIX
 			return _DARKMODELIB_USE_SCROLLBAR_FIX;
+#else
+			return FALSE;
+#endif
+		}
+
+		case LibInfo::memAPI:
+		{
+#ifdef _DARKMODELIB_CUSTOM_MEM
+			return _DARKMODELIB_CUSTOM_MEM;
 #else
 			return FALSE;
 #endif
@@ -1214,7 +1225,7 @@ void dmlib::removeUpDownCtrlSubclass(HWND hWnd)
  * @see DarkModeParams
  * @see dmlib::setUpDownCtrlSubclass()
  */
-static void setUpDownCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
+static void setUpDownCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) DMLIB_MEM_NOEXCEPT
 {
 	if (p.m_theme)
 	{
@@ -1235,7 +1246,7 @@ static void setUpDownCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
  * @see dmlib_subclass::TabPaintSubclass()
  * @see removeTabCtrlPaintSubclass()
  */
-static void setTabCtrlPaintSubclass(HWND hWnd)
+static void setTabCtrlPaintSubclass(HWND hWnd) DMLIB_MEM_NOEXCEPT
 {
 	dmlib_subclass::SetSubclass<dmlib_subclass::TabData>(hWnd, dmlib_subclass::TabPaintSubclass, dmlib_subclass::SubclassID::tabPaint);
 }
@@ -1398,7 +1409,7 @@ void dmlib::removeCustomBorderForListBoxOrEditCtrlSubclass(HWND hWnd)
  * @see DarkModeParams
  * @see dmlib::setCustomBorderForListBoxOrEditCtrlSubclass()
  */
-static void setCustomBorderForListBoxOrEditCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p, bool isListBox)
+static void setCustomBorderForListBoxOrEditCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p, bool isListBox) DMLIB_MEM_NOEXCEPT
 {
 	const auto nStyle = ::GetWindowLongPtr(hWnd, GWL_STYLE);
 	const bool hasScrollBar = ((nStyle & WS_HSCROLL) == WS_HSCROLL) || ((nStyle & WS_VSCROLL) == WS_VSCROLL);
@@ -1506,7 +1517,7 @@ void dmlib::removeComboBoxCtrlSubclass(HWND hWnd)
  * @see DarkModeParams
  * @see dmlib::setComboBoxCtrlSubclass()
  */
-static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
+static void setComboBoxCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) DMLIB_MEM_NOEXCEPT
 {
 	const auto cbStyle = ::GetWindowLongPtr(hWnd, GWL_STYLE) & CBS_DROPDOWNLIST;
 	const bool isCbList = cbStyle == CBS_DROPDOWNLIST;
@@ -1660,7 +1671,7 @@ void dmlib::removeListViewCtrlSubclass(HWND hWnd)
  * @see dmlib::setListViewCtrlSubclass()
  * @see dmlib::setHeaderCtrlSubclass()
  */
-static void setListViewCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p)
+static void setListViewCtrlSubclassAndTheme(HWND hWnd, DarkModeParams p) DMLIB_MEM_NOEXCEPT
 {
 	auto* hHeader = ListView_GetHeader(hWnd);
 
@@ -2273,7 +2284,7 @@ static void setMonthCalendarCtrlTheme(HWND hWnd, DarkModeParams p) noexcept
  * @see setDTPCtrlSubclassAndTheme()
  * @see setMonthCalendarCtrlTheme()
  */
-static BOOL CALLBACK DarkEnumChildProc(HWND hWnd, LPARAM lParam)
+static BOOL CALLBACK DarkEnumChildProc(HWND hWnd, LPARAM lParam) DMLIB_MEM_NOEXCEPT
 {
 	const auto& p = *reinterpret_cast<DarkModeParams*>(lParam);
 	const auto className = dmlib_subclass::WndClassName(hWnd);

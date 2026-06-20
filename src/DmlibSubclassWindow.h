@@ -14,6 +14,8 @@
 
 #include <windows.h>
 
+#include "MemoryHelperDef.h"
+
 namespace dmlib_subclass
 {
 	LRESULT CALLBACK WindowEraseBgSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
@@ -23,6 +25,6 @@ namespace dmlib_subclass
 	LRESULT CALLBACK WindowSettingChangeSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) noexcept;
 
 	/// Applies a subclass to task dialog and its children to handle dark mode.
-	void setTaskDlgChildCtrlsSubclassAndTheme(HWND hWnd);
+	void setTaskDlgChildCtrlsSubclassAndTheme(HWND hWnd) DMLIB_MEM_NOEXCEPT;
 
 } // namespace dmlib_subclass

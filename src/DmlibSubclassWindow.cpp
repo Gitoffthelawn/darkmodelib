@@ -30,6 +30,7 @@
 #include "DmlibPaintHelper.h"
 #include "DmlibSubclass.h"
 #include "DmlibSubclassControl.h"
+#include "MemoryHelperDef.h"
 
 #include "UAHMenuBar.h"
 
@@ -1566,7 +1567,7 @@ static LRESULT CALLBACK DarkTaskDlgSubclass(
  *
  * @see DarkTaskDlgSubclass()
  */
-static void setDarkTaskDlgSubclass(HWND hWnd)
+static void setDarkTaskDlgSubclass(HWND hWnd) DMLIB_MEM_NOEXCEPT
 {
 	dmlib_subclass::SetSubclass<TaskDlgData>(hWnd, DarkTaskDlgSubclass, dmlib_subclass::SubclassID::taskDlg);
 }
@@ -1578,7 +1579,7 @@ static void setDarkTaskDlgSubclass(HWND hWnd)
  * @param[in]   lParam  LPARAM data (unused).
  * @return `TRUE` to continue enumeration.
  */
-static BOOL CALLBACK DarkTaskEnumChildProc(HWND hWnd, [[maybe_unused]] LPARAM lParam)
+static BOOL CALLBACK DarkTaskEnumChildProc(HWND hWnd, [[maybe_unused]] LPARAM lParam) DMLIB_MEM_NOEXCEPT
 {
 	const auto className = dmlib_subclass::WndClassName(hWnd);
 
@@ -1648,7 +1649,7 @@ static BOOL CALLBACK DarkTaskEnumChildProc(HWND hWnd, [[maybe_unused]] LPARAM lP
  * @see DarkTaskDlgSubclass()
  * @see DarkTaskEnumChildProc()
  */
-void dmlib_subclass::setTaskDlgChildCtrlsSubclassAndTheme(HWND hWnd)
+void dmlib_subclass::setTaskDlgChildCtrlsSubclassAndTheme(HWND hWnd) DMLIB_MEM_NOEXCEPT
 {
 	setDarkTaskDlgSubclass(hWnd);
 	::EnumChildWindows(hWnd, DarkTaskEnumChildProc, 0);
