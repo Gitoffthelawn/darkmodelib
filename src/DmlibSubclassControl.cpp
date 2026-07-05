@@ -25,7 +25,12 @@
 #include <array>
 #include <climits>
 #include <memory>
+
+#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM == 0x002)
+#include "MemoryHelper.h"
+#else
 #include <string>
+#endif
 
 #include "Darkmodelib.h"
 
@@ -34,6 +39,8 @@
 #include "DmlibHook.h"
 #include "DmlibPaintHelper.h"
 #include "DmlibSubclass.h"
+
+#include "MemoryHelperDef.h"
 
 #ifdef __GNUC__
 static constexpr int CP_DROPDOWNITEM = 9; // for some reason mingw use only enum up to 8
@@ -65,7 +72,7 @@ static void renderButton(
 	HTHEME hTheme,
 	int iPartID,
 	int iStateID
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	// Font part
 
@@ -138,7 +145,7 @@ static void renderButton(
 	::GetClientRect(hWnd, &rcClient);
 
 	const auto bufferLen = static_cast<size_t>(::GetWindowTextLengthW(hWnd));
-	auto buffer = std::wstring(bufferLen + 1, L'\0');
+	auto buffer = DMLIB_BUF_WSTRING(bufferLen + 1, L'\0');
 	::GetWindowTextW(hWnd, buffer.data(), static_cast<int>(buffer.length()));
 
 	SIZE szBox{};
@@ -197,7 +204,7 @@ static void renderButton(
  *
  * @see renderButton()
  */
-static void paintButton(HWND hWnd, HDC hdc, dmlib_subclass::ButtonData& buttonData)
+static void paintButton(HWND hWnd, HDC hdc, dmlib_subclass::ButtonData& buttonData) DMLIB_BUF_NOEXCEPT
 {
 	const auto& hTheme = buttonData.m_themeData.getHTheme();
 
@@ -359,7 +366,7 @@ LRESULT CALLBACK dmlib_subclass::ButtonSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	auto* pButtonData = reinterpret_cast<ButtonData*>(dwRefData);
 	auto& themeData = pButtonData->m_themeData;
@@ -496,7 +503,7 @@ LRESULT CALLBACK dmlib_subclass::ButtonSubclass(
  *
  * @see dmlib::paintRoundFrameRect()
  */
-static void paintGroupbox(HWND hWnd, HDC hdc, const dmlib_subclass::ButtonData& buttonData)
+static void paintGroupbox(HWND hWnd, HDC hdc, const dmlib_subclass::ButtonData& buttonData) DMLIB_BUF_NOEXCEPT
 {
 	const auto& hTheme = buttonData.m_themeData.getHTheme();
 
@@ -527,7 +534,7 @@ static void paintGroupbox(HWND hWnd, HDC hdc, const dmlib_subclass::ButtonData& 
 
 	// Text rectangle part
 
-	std::wstring buffer;
+	DMLIB_BUF_WSTRING buffer;
 	const auto bufferLen = static_cast<size_t>(::GetWindowTextLengthW(hWnd));
 	if (bufferLen > 0)
 	{
@@ -618,7 +625,7 @@ LRESULT CALLBACK dmlib_subclass::GroupboxSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	auto* pButtonData = reinterpret_cast<ButtonData*>(dwRefData);
 	auto& themeData = pButtonData->m_themeData;
@@ -2076,7 +2083,7 @@ static void renderComboBoxList(
 	HDC hdc,
 	dmlib_subclass::ComboBoxData& comboBoxData,
 	int iStateID
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	auto& themeData = comboBoxData.m_themeData;
 	const auto& hTheme = themeData.getHTheme();
@@ -2133,7 +2140,7 @@ static void renderComboBoxList(
 		else
 		{
 			const auto bufferLen = static_cast<size_t>(::SendMessage(hWnd, CB_GETLBTEXTLEN, static_cast<WPARAM>(index), 0));
-			auto buffer = std::wstring(bufferLen + 1, L'\0');
+			auto buffer = DMLIB_BUF_WSTRING(bufferLen + 1, L'\0');
 			::SendMessage(hWnd, CB_GETLBTEXT, static_cast<WPARAM>(index), reinterpret_cast<LPARAM>(buffer.data()));
 
 			RECT rcText{ cbi.rcItem };
@@ -2204,7 +2211,7 @@ static void renderComboBoxList(
  * @see renderComboBoxEdit()
  * @see renderComboBoxList()
  */
-static void renderComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData, int iStateID)
+static void renderComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData, int iStateID) DMLIB_BUF_NOEXCEPT
 {
 	if (comboBoxData.m_cbStyle == CBS_DROPDOWNLIST)
 	{
@@ -2234,7 +2241,7 @@ static void renderComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& com
  * @see renderComboBoxEdit()
  * @see renderComboBoxList()
  */
-static void paintComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData)
+static void paintComboBox(HWND hWnd, HDC hdc, dmlib_subclass::ComboBoxData& comboBoxData) DMLIB_BUF_NOEXCEPT
 {
 	RECT rcClient{};
 	const int iStateID = getComboBoxStateAndRect(hWnd, rcClient);
@@ -2315,7 +2322,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	auto* pComboboxData = reinterpret_cast<ComboBoxData*>(dwRefData);
 	auto& themeData = pComboboxData->m_themeData;
@@ -2367,7 +2374,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 				}
 
 				dmlib_paint::PaintWithBuffer<ComboBoxData>(*pComboboxData, hdc, ps,
-					[&]() { paintComboBox(hWnd, hMemDC, *pComboboxData); },
+					[&]() DMLIB_BUF_NOEXCEPT { paintComboBox(hWnd, hMemDC, *pComboboxData); },
 					hWnd);
 			}
 			else
@@ -3064,7 +3071,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
  *
  * @see StatusBarData
  */
-static void paintStatusBar(HWND hWnd, HDC hdc, dmlib_subclass::StatusBarData& statusBarData)
+static void paintStatusBar(HWND hWnd, HDC hdc, dmlib_subclass::StatusBarData& statusBarData) DMLIB_BUF_NOEXCEPT
 {
 	struct
 	{
@@ -3090,7 +3097,7 @@ static void paintStatusBar(HWND hWnd, HDC hdc, dmlib_subclass::StatusBarData& st
 	::FillRect(hdc, &rcClient, dmlib::getBackgroundBrush());
 
 	const auto nParts = static_cast<int>(::SendMessage(hWnd, SB_GETPARTS, 0, 0));
-	std::wstring str;
+	DMLIB_BUF_WSTRING str;
 	RECT rcPart{};
 	RECT rcIntersect{};
 	// no edge before size grip
@@ -3152,7 +3159,7 @@ static void paintStatusBar(HWND hWnd, HDC hdc, dmlib_subclass::StatusBarData& st
 		{rcClient.left, rcClient.top},
 		{rcClient.right, rcClient.top}
 	};
-	Polyline(hdc, edgeHor, _countof(edgeHor));
+	::Polyline(hdc, edgeHor, _countof(edgeHor));
 #endif
 
 		// draw optional size grip
@@ -3193,7 +3200,7 @@ LRESULT CALLBACK dmlib_subclass::StatusBarSubclass(
 	LPARAM lParam,
 	UINT_PTR uIdSubclass,
 	DWORD_PTR dwRefData
-)
+) DMLIB_BUF_NOEXCEPT
 {
 	auto* pStatusBarData = reinterpret_cast<StatusBarData*>(dwRefData);
 	auto& themeData = pStatusBarData->m_themeData;
@@ -3240,7 +3247,7 @@ LRESULT CALLBACK dmlib_subclass::StatusBarSubclass(
 			}
 
 			dmlib_paint::PaintWithBuffer<StatusBarData>(*pStatusBarData, hdc, ps,
-				[&]() { paintStatusBar(hWnd, hMemDC, *pStatusBarData); },
+				[&]() DMLIB_BUF_NOEXCEPT { paintStatusBar(hWnd, hMemDC, *pStatusBarData); },
 				hWnd);
 
 			::EndPaint(hWnd, &ps);

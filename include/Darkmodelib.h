@@ -157,7 +157,10 @@ namespace dmlib
 		useDlgProcCtl,    ///< True if WM_CTLCOLORxxx can be handled directly in dialog procedure.
 		preferTheme,      ///< True if theme is supported and can be used over subclass, e.g. combo box on Windows 10+.
 		useSBFix,         ///< '1' if scroll bar fix is applied to all scroll bars, '2' if scroll bar fix can be limited to specific window.
-		memAPI,           ///< '0x001' if custom nothrow implementation of std::make_unique is used.
+		//
+		/// '0x001' if custom nothrow implementation of std::make_unique is used,
+		/// '0x002' if also custom buffer instead of std::wstring is used.
+		memAPI,
 		maxValue          ///< Sentinel value for internal validation (not intended for use).
 	};
 

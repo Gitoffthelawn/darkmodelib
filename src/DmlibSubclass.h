@@ -22,7 +22,7 @@
 #include <string_view>
 #include <type_traits>
 
-#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM == 0x001)
+#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM >= 0x001)
 #include "MemoryHelper.h"
 #endif
 #include "MemoryHelperDef.h"

@@ -12,11 +12,19 @@
 
 #pragma once
 
-#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM == 0x001)
+#if defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM >= 0x001)
 	#define DMLIB_MEM_MAKE_UNIQUE ::dmlib_mem::make_unique_nothrow
 	#define DMLIB_MEM_NOEXCEPT noexcept
-
+	#if (_DARKMODELIB_CUSTOM_MEM == 0x002)
+		#define DMLIB_BUF_WSTRING ::dmlib_mem::BufferWString
+		#define DMLIB_BUF_NOEXCEPT noexcept
+	#else
+		#define DMLIB_BUF_WSTRING ::std::wstring
+		#define DMLIB_BUF_NOEXCEPT
+	#endif // (_DARKMODELIB_CUSTOM_MEM == 0x002)
 #else
 	#define DMLIB_MEM_MAKE_UNIQUE ::std::make_unique
 	#define DMLIB_MEM_NOEXCEPT
-#endif // defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM > 0)
+	#define DMLIB_BUF_WSTRING ::std::wstring
+	#define DMLIB_BUF_NOEXCEPT
+#endif // defined(_DARKMODELIB_CUSTOM_MEM) && (_DARKMODELIB_CUSTOM_MEM >= 0x001)
