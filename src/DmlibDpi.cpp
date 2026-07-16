@@ -202,6 +202,14 @@ void dmlib_dpi::loadIcon(HINSTANCE hinst, const wchar_t* pszName, int cx, int cy
 	}
 }
 
+void dmlib_dpi::loadIconMetric(HINSTANCE hinst, const wchar_t* pszName, int lims, HICON& hicon) noexcept
+{
+	if (::LoadIconMetric(hinst, pszName, lims, &hicon) != S_OK)
+	{
+		hicon = static_cast<HICON>(::LoadImageW(hinst, pszName, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR));
+	}
+}
+
 HTHEME dmlib_dpi::OpenThemeDataForDpi(HWND hwnd, LPCWSTR pszClassList, UINT dpi) noexcept
 {
 	return pfOpenThemeDataForDpi(hwnd, pszClassList, dpi);

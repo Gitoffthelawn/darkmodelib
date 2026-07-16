@@ -56,6 +56,7 @@ BEGIN
         MENUITEM "Choose &Color",               IDM_CHOOSECOLOR
         MENUITEM "Choose &Font",                IDM_CHOOSEFONT
         MENUITEM "&Task Dialog",                IDM_TASKDIALOG
+        MENUITEM "&Message Box",                IDM_MSGBOX
     END
     POPUP "&Help"
     BEGIN

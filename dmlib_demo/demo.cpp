@@ -1209,6 +1209,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 
+				case IDM_MSGBOX:
+				{
+					dmlib::darkMessageBoxW(hWnd,
+						L"In dark mode message box is replaced by task dialog to have dark colors.\n" \
+						L"If `lpCation` parameter is nullptr \"Error\" string is used. Developer will need to provide localization themself.",
+						nullptr, MB_CANCELTRYCONTINUE | MB_ICONQUESTION | MB_DEFBUTTON2);
+					break;
+				}
+
 				case IDM_DARK:
 				case IDM_LIGHT:
 				case IDM_CLASSIC:
