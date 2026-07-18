@@ -297,6 +297,9 @@ namespace dmlib
 	 */
 	DMLIB_API void setSysColor(int nIndex, COLORREF color);
 
+	/// Overrides a specific system colors with a custom colors for ChooseFont dialog.
+	DMLIB_API void setChooseFontDlgColors();
+
 	// ========================================================================
 	// Enhancements to DarkMode.h
 	// ========================================================================

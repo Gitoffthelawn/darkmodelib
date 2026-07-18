@@ -27,6 +27,8 @@ namespace dmlib_color
 			| ((rrggbb & 0x0000FF) << 16);
 	}
 
+	inline constexpr COLORREF kAccentBlue = dmlib_color::HEXRGB(0x0078D7);
+
 	/// Black tone (default)
 	inline constexpr dmlib::Colors kDarkColors{
 		dmlib_color::HEXRGB(0x202020),   // background

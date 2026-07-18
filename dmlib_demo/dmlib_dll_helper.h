@@ -206,6 +206,7 @@ namespace dmlib
 		[[nodiscard]] inline bool DummyIsDarkModeReg() { return false; }
 
 		inline void DummySetSysColor(int, COLORREF) {}
+		inline void DummySetChooseFontDlgColors() {}
 		inline void DummyEnableDarkScrollBarForWindowAndChildren(HWND) {}
 
 		inline void DummySetColorTone(int) {}
@@ -492,6 +493,9 @@ namespace dmlib
 
 	using fnSetSysColor = auto (*)(int nIndex, COLORREF color) -> void;
 	inline fnSetSysColor setSysColor = nullptr;
+
+	using fnSetChooseFontDlgColors = auto (*)() -> void;
+	inline fnSetChooseFontDlgColors setChooseFontDlgColors = nullptr;
 
 	using fnEnableDarkScrollBarForWindowAndChildren = auto (*)(HWND hWnd) -> void;
 	inline fnEnableDarkScrollBarForWindowAndChildren enableDarkScrollBarForWindowAndChildren = nullptr;

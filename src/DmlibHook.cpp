@@ -61,18 +61,19 @@ struct HookData
 {
 	T m_trueFn = nullptr;
 	size_t m_ref = 0;
-	const char* m_dllName = nullptr;
+	const char* m_fromDll = nullptr;
+	const wchar_t* m_hookedDll = nullptr;
 
 	const char* m_fnName = nullptr;
 	fnFindThunkInModule m_findFn = nullptr;
 
 	std::uint16_t m_ord = 0;
 
-	void init(const char* dllName, const char* funcName, const fnFindThunkInModule& findFn) noexcept
+	void init(const char* fromDll, const char* funcName, const fnFindThunkInModule& findFn) noexcept
 	{
-		if (m_dllName == nullptr)
+		if (m_fromDll == nullptr)
 		{
-			m_dllName = dllName;
+			m_fromDll = fromDll;
 			m_fnName = funcName;
 			m_findFn = findFn;
 
@@ -80,11 +81,11 @@ struct HookData
 		}
 	}
 
-	void init(const char* dllName, std::uint16_t ord) noexcept
+	void init(const char* fromDll, std::uint16_t ord) noexcept
 	{
-		if (m_dllName == nullptr)
+		if (m_fromDll == nullptr)
 		{
-			m_dllName = dllName;
+			m_fromDll = fromDll;
 			m_ord = ord;
 
 			m_fnName = nullptr;
@@ -96,12 +97,12 @@ struct HookData
 	{
 		if (m_fnName != nullptr && m_findFn != nullptr)
 		{
-			return m_findFn(hMod, m_dllName, m_fnName);
+			return m_findFn(hMod, m_fromDll, m_fnName);
 		}
 
 		if (m_ord != 0)
 		{
-			return iat_hook::FindDelayLoadThunkInModule(hMod, m_dllName, m_ord);
+			return iat_hook::FindDelayLoadThunkInModule(hMod, m_fromDll, m_ord);
 		}
 
 		return nullptr;
@@ -109,19 +110,20 @@ struct HookData
 };
 
 template <typename T, typename... InitArgs>
-static auto HookFunction(HookData<T>& hookData, T newFn, const char* dllName, InitArgs&&... args) noexcept -> bool
+static auto HookFunction(HookData<T>& hookData, const wchar_t* hookedDll, T newFn, const char* fromDll, InitArgs&&... args) noexcept -> bool
 {
-	const dmlib_module::ModuleHandle moduleComctl(L"comctl32.dll");
-	if (!moduleComctl.isLoaded())
+	hookData.m_hookedDll = hookedDll;
+	const dmlib_module::ModuleHandle hookedMod(hookData.m_hookedDll);
+	if (!hookedMod.isLoaded())
 	{
 		return false;
 	}
 
 	if (hookData.m_trueFn == nullptr && hookData.m_ref == 0)
 	{
-		hookData.init(dllName, std::forward<InitArgs>(args)...);
+		hookData.init(fromDll, std::forward<InitArgs>(args)...);
 
-		auto* addr = hookData.findAddr(moduleComctl.get());
+		auto* addr = hookData.findAddr(hookedMod.get());
 		if (addr != nullptr)
 		{
 			hookData.m_trueFn = ReplaceFunction<T>(addr, newFn);
@@ -139,8 +141,8 @@ static auto HookFunction(HookData<T>& hookData, T newFn, const char* dllName, In
 template <typename T>
 static void UnhookFunction(HookData<T>& hookData) noexcept
 {
-	const dmlib_module::ModuleHandle moduleComctl(L"comctl32.dll");
-	if (!moduleComctl.isLoaded())
+	const dmlib_module::ModuleHandle hookedMod(hookData.m_hookedDll);
+	if (!hookedMod.isLoaded())
 	{
 		return;
 	}
@@ -151,7 +153,7 @@ static void UnhookFunction(HookData<T>& hookData) noexcept
 
 		if (hookData.m_trueFn != nullptr && hookData.m_ref == 0)
 		{
-			auto* addr = hookData.findAddr(moduleComctl.get());
+			auto* addr = hookData.findAddr(hookedMod.get());
 			if (addr != nullptr)
 			{
 				ReplaceFunction<T>(addr, hookData.m_trueFn);
@@ -247,13 +249,11 @@ void dmlib_hook::fixDarkScrollBar()
 
 // Hooking GetSysColor for combo box ex' list box and list view's gridlines
 
-
 static HookData<decltype(&::GetSysColor)> g_hookDataGetSysColor{};
 
 static COLORREF g_clrWindow = RGB(32, 32, 32);
 static COLORREF g_clrText = RGB(224, 224, 224);
-static COLORREF g_clrTGridlines = RGB(100, 100, 100);
-
+static COLORREF g_clrGridlines = RGB(100, 100, 100);
 
 /**
  * @brief Overrides a specific system color with a custom color.
@@ -261,7 +261,7 @@ static COLORREF g_clrTGridlines = RGB(100, 100, 100);
  * Currently supports:
  * - `COLOR_WINDOW`: Background of ComboBoxEx list.
  * - `COLOR_WINDOWTEXT`: Text color of ComboBoxEx list.
- * - `COLOR_BTNFACE`: Gridline color in ListView (when applicable).
+ * - `COLOR_3DFACE`: Gridline color in ListView (when applicable).
  *
  * @param[in]   nIndex  One of the supported system color indices.
  * @param[in]   clr     Custom `COLORREF` value to apply.
@@ -282,9 +282,9 @@ void dmlib_hook::setMySysColor(int nIndex, COLORREF clr) noexcept
 			break;
 		}
 
-		case COLOR_BTNFACE:
+		case COLOR_3DFACE:
 		{
-			g_clrTGridlines = clr;
+			g_clrGridlines = clr;
 			break;
 		}
 
@@ -314,9 +314,9 @@ static DWORD WINAPI MyGetSysColor(int nIndex) noexcept
 			return g_clrText;
 		}
 
-		case COLOR_BTNFACE:
+		case COLOR_3DFACE:
 		{
-			return g_clrTGridlines;
+			return g_clrGridlines;
 		}
 
 		default:
@@ -335,6 +335,7 @@ bool dmlib_hook::hookSysColor() noexcept
 {
 	return HookFunction<decltype(&::GetSysColor)>(
 		g_hookDataGetSysColor,
+		L"comctl32.dll",
 		MyGetSysColor,
 		"user32.dll",
 		static_cast<const char*>("GetSysColor"),
@@ -506,12 +507,16 @@ bool dmlib_hook::hookThemeColor() noexcept
 	}
 
 	return
-		HookFunction<decltype(&::GetThemeColor)>(g_hookDataGetThemeColor,
+		HookFunction<decltype(&::GetThemeColor)>(
+			g_hookDataGetThemeColor,
+			L"comctl32.dll",
 			MyGetThemeColor,
 			"uxtheme.dll",
 			static_cast<const char*>("GetThemeColor"),
 			static_cast<fnFindThunkInModule>(iat_hook::FindDelayLoadThunkInModule))
-		&& HookFunction<decltype(&::DrawThemeBackgroundEx)>(g_hookDataDrawThemeBackgroundEx,
+		&& HookFunction<decltype(&::DrawThemeBackgroundEx)>(
+			g_hookDataDrawThemeBackgroundEx,
+			L"comctl32.dll",
 			MyDrawThemeBackgroundEx,
 			"uxtheme.dll",
 			kDrawThemeBackgroundExOrdinal);
@@ -545,5 +550,205 @@ void dmlib_hook::unhookThemeColor() noexcept
 	{
 		::DeleteObject(g_hBrushBgFooter);
 		g_hBrushBgFooter = nullptr;
+	}
+}
+
+// Hooking for ChooseFont dialog
+
+static HookData<decltype(&::GetSysColor)> g_hookDataFontGetSysColor{};
+static HookData<decltype(&::FillRect)> g_hookDataFontFillRect{};
+
+static COLORREF g_clrFontWindow = RGB(32, 32, 32);
+static COLORREF g_clrFontText = RGB(192, 192, 192);
+static COLORREF g_clrFontHighlight = RGB(0, 120, 215);
+static COLORREF g_clrFontHighlightText = RGB(224, 224, 224);
+static COLORREF g_clrFontPreviewBg = RGB(32, 32, 32);
+
+static HBRUSH g_hBrushFontWindow = nullptr;
+static HBRUSH g_hBrushFontHighlight = nullptr;
+
+/**
+ * @brief Overrides a specific system color with a custom color for ChooseFont dialog.
+ *
+ * Currently supports:
+ * - `COLOR_WINDOW`: Background of ComboBox lists.
+ * - `COLOR_WINDOWTEXT`: Text color of ComboBox lists.
+ * - `COLOR_HIGHLIGHT`: Highlighted background of ComboBox lists.
+ * - `COLOR_HIGHLIGHTTEXT`: Highlighted text color of ComboBox lists.
+ * - `COLOR_3DFACE`: Background color of font preview.
+ *
+ * @param[in]   nIndex  One of the supported system color indices.
+ * @param[in]   clr     Custom `COLORREF` value to apply.
+ */
+void dmlib_hook::setMyFontSysColor(int nIndex, COLORREF clr) noexcept
+{
+	switch (nIndex)
+	{
+		case COLOR_WINDOW:
+		{
+			g_clrFontWindow = clr;
+			break;
+		}
+
+		case COLOR_WINDOWTEXT:
+		{
+			g_clrFontText = clr;
+			break;
+		}
+
+		case COLOR_HIGHLIGHT:
+		{
+			g_clrFontHighlight = clr;
+			break;
+		}
+
+		case COLOR_HIGHLIGHTTEXT:
+		{
+			g_clrFontHighlightText = clr;
+			break;
+		}
+
+		case COLOR_3DFACE:
+		{
+			g_clrFontPreviewBg = clr;
+			break;
+		}
+
+		default:
+		{
+			break;
+		}
+	}
+}
+
+static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
+{
+	if (!dmlib_win32api::IsDarkModeActive())
+	{
+		return g_hookDataFontGetSysColor.m_trueFn(nIndex);
+	}
+
+	switch (nIndex)
+	{
+		case COLOR_WINDOW:
+		{
+			return g_clrFontWindow;
+		}
+
+		case COLOR_WINDOWTEXT:
+		{
+			return g_clrFontText;
+		}
+
+		case COLOR_HIGHLIGHT:
+		{
+			return g_clrFontHighlight;
+		}
+
+		case COLOR_HIGHLIGHTTEXT:
+		{
+			return g_clrFontHighlightText;
+		}
+
+		case COLOR_BTNFACE:
+		{
+			return g_clrFontPreviewBg;
+		}
+
+		default:
+		{
+			return g_hookDataFontGetSysColor.m_trueFn(nIndex);
+		}
+	}
+}
+
+static int WINAPI MyFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
+{
+	if (!dmlib_win32api::IsDarkModeActive())
+	{
+		return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hbr);
+	}
+
+	HBRUSH hBrush = nullptr;
+
+	switch (reinterpret_cast<UINT_PTR>(hbr))
+	{
+		case COLOR_WINDOW + 1:
+		{
+			hBrush = g_hBrushFontWindow;
+			break;
+		}
+
+		case COLOR_HIGHLIGHT + 1:
+		{
+			hBrush = g_hBrushFontHighlight;
+			break;
+		}
+
+		default:
+		{
+			hBrush = hbr;
+		}
+	}
+
+	return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
+}
+
+/**
+ * @brief Hooks system color to support runtime customization for ChooseFont dialog.
+ *
+ * @return `true` if the hook was installed successfully.
+ */
+bool dmlib_hook::hookChooseFontDlgColors() noexcept
+{
+	if (g_hBrushFontWindow == nullptr)
+	{
+		g_hBrushFontWindow = ::CreateSolidBrush(g_clrFontWindow);
+	}
+
+	if (g_hBrushFontHighlight == nullptr)
+	{
+		g_hBrushFontHighlight = ::CreateSolidBrush(g_clrFontHighlight);
+	}
+
+	return
+		HookFunction<decltype(&::GetSysColor)>(
+			g_hookDataFontGetSysColor,
+			L"comdlg32.dll",
+			MyFontGetSysColor,
+			"user32.dll",
+			static_cast<const char*>("GetSysColor"),
+			iat_hook::FindIatThunkInModule)
+		&& HookFunction<decltype(&::FillRect)>(
+			g_hookDataFontFillRect,
+			L"comdlg32.dll",
+			MyFillRect,
+			"user32.dll",
+			static_cast<const char*>("FillRect"),
+			iat_hook::FindIatThunkInModule);
+}
+
+/**
+ * @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+ *
+ * This function is safe to call even if no color hook is currently installed.
+ * It ensures that system colors return to normal without requiring
+ * prior state checks.
+ */
+void dmlib_hook::unhookChooseFontDlgColors() noexcept
+{
+	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
+	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
+
+	if (g_hBrushFontWindow != nullptr)
+	{
+		::DeleteObject(g_hBrushFontWindow);
+		g_hBrushFontWindow = nullptr;
+	}
+
+	if (g_hBrushFontHighlight != nullptr)
+	{
+		::DeleteObject(g_hBrushFontHighlight);
+		g_hBrushFontHighlight = nullptr;
 	}
 }
