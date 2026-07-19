@@ -4028,6 +4028,43 @@ LRESULT dmlib::onCtlColorListbox(WPARAM wParam, LPARAM lParam)
 	return dmlib::onCtlColor(hdc);
 }
 
+/**
+ * @brief Helper wrapper for window subclass procedure for customizing ChooseFont and ChooseColor dialogs.
+ *
+ * @param[in]   hWnd        Window handle being subclassed.
+ * @param[in]   uMsg        Message identifier.
+ * @param[in]   wParam      Message-specific data.
+ * @param[in]   lParam      Message-specific data.
+ * @return LRESULT Result of message processing.
+ *
+ * @see ComDlgSubclass()
+ */
+static LRESULT hookedComDlgClrsDefSubclassProc(
+	HWND hWnd,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam
+) noexcept
+{
+	dmlib_hook::hookComDlgColors();
+	const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	dmlib_hook::unhookComDlgColors();
+	return resVal;
+}
+
+/**
+ * @brief Window subclass procedure for customizing ChooseFont and ChooseColor dialogs.
+ *
+ * @param[in]   hWnd        Window handle being subclassed.
+ * @param[in]   uMsg        Message identifier.
+ * @param[in]   wParam      Message-specific data.
+ * @param[in]   lParam      Message-specific data.
+ * @param[in]   uIdSubclass Subclass identifier.
+ * @param[in]   dwRefData   Reference data (unused).
+ * @return LRESULT Result of message processing.
+ *
+ * @see dmlib::HookDlgProc()
+ */
 static LRESULT CALLBACK ComDlgSubclass(
 	HWND hWnd,
 	UINT uMsg,
@@ -4043,6 +4080,7 @@ static LRESULT CALLBACK ComDlgSubclass(
 		{
 			::RemoveWindowSubclass(hWnd, ComDlgSubclass, uIdSubclass);
 			dmlib_hook::unhookComDlgColors();
+			dmlib_hook::unhookFontDlgMB();
 			break;
 		}
 
@@ -4054,10 +4092,22 @@ static LRESULT CALLBACK ComDlgSubclass(
 				break;
 			}
 
-			dmlib_hook::hookComDlgColors();
-			const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			dmlib_hook::unhookComDlgColors();
-			return resVal;
+			return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
+		}
+
+		case WM_DRAWITEM: // for combo boxes and their list boxes
+		{
+			if (!dmlib::isEnabled())
+			{
+				break;
+			}
+
+			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
+			{
+				return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
+			}
+
+			break;
 		}
 
 		case WM_COMMAND: // for ChooseColor dialog luminosity slide control
@@ -4067,18 +4117,18 @@ static LRESULT CALLBACK ComDlgSubclass(
 				break;
 			}
 
-			if (HIWORD(wParam) == EN_CHANGE
-				&& (LOWORD(wParam) == COLOR_RED
-					|| LOWORD(wParam) == COLOR_GREEN
-					|| LOWORD(wParam) == COLOR_BLUE))
+			const int id = LOWORD(wParam);
+			const int nCode = HIWORD(wParam);
+
+			if (nCode == EN_CHANGE
+				&& (id == COLOR_RED
+					|| id == COLOR_GREEN
+					|| id == COLOR_BLUE))
 			{
-				dmlib_hook::hookComDlgColors();
-				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookComDlgColors();
-				return resVal;
+				return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 
-			if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == COLOR_LUM)
+			if (nCode == EN_CHANGE && id == COLOR_LUM)
 			{
 				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
@@ -4091,30 +4141,20 @@ static LRESULT CALLBACK ComDlgSubclass(
 
 				const LONG gap = rcLum.top - rcClient.top;
 				::InflateRect(&rcLum, 0, gap);
+				rcLum.left = rcLum.right;
 				rcLum.right = rcClient.right;
 
 				::RedrawWindow(hWnd, &rcLum, nullptr, RDW_INVALIDATE);
 				return resVal;
 			}
 
-			break;
-		}
-
-		case WM_DRAWITEM: // for combo boxes and their list boxes
-		{
-			if (!dmlib::isEnabled())
+			if (id == IDOK && nCode == BN_CLICKED) // for ChooseFont dialog message boxes
 			{
-				break;
-			}
-
-			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
-			{
-				dmlib_hook::hookComDlgColors();
+				dmlib_hook::hookFontDlgMB();
 				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookComDlgColors();
+				dmlib_hook::unhookFontDlgMB();
 				return resVal;
 			}
-
 			break;
 		}
 
@@ -4127,7 +4167,7 @@ static LRESULT CALLBACK ComDlgSubclass(
 }
 
 /**
- * @brief Hook procedure for customizing common dialogs with custom colors.
+ * @brief Hook procedure for customizing ChooseFont and ChooseColor dialogs with custom colors.
  */
 UINT_PTR CALLBACK dmlib::HookDlgProc(HWND hWnd, UINT uMsg, [[maybe_unused]] WPARAM wParam, [[maybe_unused]] LPARAM lParam)
 {

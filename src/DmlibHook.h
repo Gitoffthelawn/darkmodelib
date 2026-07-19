@@ -41,4 +41,8 @@ namespace dmlib_hook
 	bool hookComDlgColors() noexcept;
 	/// Unhooks system color overrides for ChooseFont and ChooseColor dialogs and restores default color behavior.
 	void unhookComDlgColors() noexcept;
+	/// Hooks MessageBoxW to apply dark mode for ChooseFont dialog message boxes.
+	bool hookFontDlgMB() noexcept;
+	/// Unhooks ChooseFont dialog MessageBoxW.
+	void unhookFontDlgMB() noexcept;
 } // namespace dmlib_hook

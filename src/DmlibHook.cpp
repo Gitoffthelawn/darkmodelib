@@ -39,6 +39,11 @@ namespace dmlib_win32api
 	[[nodiscard]] bool IsDarkModeActive() noexcept;
 } // namespace dmlib_win32api
 
+namespace dmlib
+{
+	extern "C" int darkMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+}
+
 using fnFindThunkInModule = auto (*)(void* moduleBase, const char* dllName, const char* funcName) -> PIMAGE_THUNK_DATA;
 
 template <typename P>
@@ -559,6 +564,8 @@ static HookData<decltype(&::GetSysColor)> g_hookDataFontGetSysColor{};
 static HookData<decltype(&::FillRect)> g_hookDataFontFillRect{};
 static HookData<decltype(&::GetSysColorBrush)> g_hookDataClrGetSysColorBrush{};
 
+static HookData<decltype(&::MessageBoxW)> g_hookDataFontMessageBoxW{};
+
 static COLORREF g_clrFontWindow = RGB(32, 32, 32);
 static COLORREF g_clrFontClrText = RGB(192, 192, 192);
 static COLORREF g_clrFontHighlight = RGB(0, 120, 215);
@@ -665,7 +672,7 @@ static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
 	}
 }
 
-static int WINAPI MyFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
+static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 {
 	if (!dmlib_win32api::IsDarkModeActive())
 	{
@@ -698,7 +705,7 @@ static int WINAPI MyFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 	return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
 }
 
-static HBRUSH WINAPI MyGetSysColorBrush(int nIndex) noexcept
+static HBRUSH WINAPI MyClrGetSysColorBrush(int nIndex) noexcept
 {
 	if (!dmlib_win32api::IsDarkModeActive())
 	{
@@ -711,6 +718,15 @@ static HBRUSH WINAPI MyGetSysColorBrush(int nIndex) noexcept
 	}
 
 	return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
+}
+
+static int WINAPI MyFontMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) noexcept
+{
+	if (!dmlib_win32api::IsDarkModeActive() || uType != MB_ICONINFORMATION)
+	{
+		return g_hookDataFontMessageBoxW.m_trueFn(hWnd, lpText, lpCaption, uType);
+	}
+	return dmlib::darkMessageBoxW(hWnd, lpText, lpCaption, uType);
 }
 
 /**
@@ -746,14 +762,14 @@ bool dmlib_hook::hookComDlgColors() noexcept
 		&& HookFunction<decltype(&::FillRect)>(
 			g_hookDataFontFillRect,
 			L"comdlg32.dll",
-			MyFillRect,
+			MyFontFillRect,
 			"user32.dll",
 			static_cast<const char*>("FillRect"),
 			iat_hook::FindIatThunkInModule)
 		&& HookFunction<decltype(&::GetSysColorBrush)>(
 			g_hookDataClrGetSysColorBrush,
 			L"comdlg32.dll",
-			MyGetSysColorBrush,
+			MyClrGetSysColorBrush,
 			"user32.dll",
 			static_cast<const char*>("GetSysColorBrush"),
 			iat_hook::FindIatThunkInModule);
@@ -770,6 +786,7 @@ void dmlib_hook::unhookComDlgColors() noexcept
 {
 	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
 	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
+	UnhookFunction<decltype(&::GetSysColorBrush)>(g_hookDataClrGetSysColorBrush);
 
 	if (g_hBrushFontWindow != nullptr)
 	{
@@ -788,4 +805,31 @@ void dmlib_hook::unhookComDlgColors() noexcept
 		::DeleteObject(g_hBrushClrLum);
 		g_hBrushClrLum = nullptr;
 	}
+}
+
+/**
+ * @brief Hooks MessageBoxW to apply dark mode for ChooseFont dialog message boxes.
+ *
+ * @return `true` if the hook was installed successfully.
+ */
+bool dmlib_hook::hookFontDlgMB() noexcept
+{
+	return HookFunction<decltype(&::MessageBoxW)>(
+		g_hookDataFontMessageBoxW,
+		L"comdlg32.dll",
+		MyFontMessageBoxW,
+		"user32.dll",
+		static_cast<const char*>("MessageBoxW"),
+		iat_hook::FindIatThunkInModule);
+}
+/**
+ * @brief Unhooks ChooseFont dialog MessageBoxW.
+ *
+ * This function is safe to call even if no message box hook is currently installed.
+ * It ensures that message box return to normal without requiring
+ * prior state checks.
+ */
+void dmlib_hook::unhookFontDlgMB() noexcept
+{
+	UnhookFunction<decltype(&::MessageBoxW)>(g_hookDataFontMessageBoxW);
 }

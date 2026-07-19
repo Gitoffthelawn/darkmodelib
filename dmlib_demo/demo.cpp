@@ -1129,8 +1129,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					cc.hwndOwner = hWnd;
 					cc.lpCustColors = customColors.data();
 					cc.rgbResult = RGB(0, 120, 215);
-					cc.Flags = CC_FULLOPEN | CC_RGBINIT | CC_ENABLEHOOK;
-					cc.lpfnHook = static_cast<LPCCHOOKPROC>(dmlib::HookDlgProc);
+					cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+					if (dmlib::isEnabled())
+					{
+						cc.Flags |= CC_ENABLEHOOK;
+						cc.lpfnHook = static_cast<LPCCHOOKPROC>(dmlib::HookDlgProc);
+					}
 
 					ChooseColorW(&cc);
 					break;
@@ -1152,11 +1156,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					cf.lStructSize = sizeof(cf);
 					cf.hwndOwner = hWnd;
 					cf.lpLogFont = &lf;
-					cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_EFFECTS;
-					cf.Flags |= CF_ENABLEHOOK | CF_ENABLETEMPLATE;
-					cf.lpfnHook = static_cast<LPCFHOOKPROC>(dmlib::HookDlgProc);
-					cf.hInstance = GetModuleHandleW(nullptr);
-					cf.lpTemplateName = MAKEINTRESOURCE(IDD_DARK_FONT_DIALOG);
+					cf.Flags = CF_BOTH | CF_INITTOLOGFONTSTRUCT | CF_EFFECTS | CF_LIMITSIZE | CF_FORCEFONTEXIST;
+					cf.nSizeMin = 8;
+					cf.nSizeMax = 72;
+					if (dmlib::isEnabled())
+					{
+						cf.Flags |= CF_ENABLEHOOK | CF_ENABLETEMPLATE;
+						cf.lpfnHook = static_cast<LPCFHOOKPROC>(dmlib::HookDlgProc);
+						cf.hInstance = GetModuleHandleW(nullptr);
+						cf.lpTemplateName = MAKEINTRESOURCE(IDD_DARK_FONT_DIALOG);
+					}
 
 					ChooseFontW(&cf);
 					break;
