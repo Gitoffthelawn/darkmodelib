@@ -23,6 +23,7 @@
 
 #include <windows.h>
 
+#include <colordlg.h>
 #include <dlgs.h>
 #include <dwmapi.h>
 #include <richedit.h>
@@ -817,7 +818,7 @@ void dmlib::initDarkModeEx([[maybe_unused]] const wchar_t* iniName)
 		dmlib::setSysColor(COLOR_WINDOWTEXT, dmlib::getTextColor());
 		dmlib::setSysColor(COLOR_3DFACE, dmlib::getViewGridlinesColor());
 
-		dmlib::setChooseFontDlgColors();
+		dmlib::setCommonDlgsSysColors();
 
 		g_dmCfg.m_isInit = true;
 	}
@@ -1024,15 +1025,15 @@ void dmlib::setSysColor(int nIndex, COLORREF color)
 	dmlib_hook::setMySysColor(nIndex, color);
 }
 /**
- * @brief Overrides a specific system colors with a custom colors for ChooseFont dialog.
+ * @brief Overrides a specific system colors with a custom colors for ChooseFont and ChooseColor dialogs.
  */
-void dmlib::setChooseFontDlgColors()
+void dmlib::setCommonDlgsSysColors()
 {
-	dmlib_hook::setMyFontSysColor(COLOR_WINDOW, dmlib::getBackgroundColor());
-	dmlib_hook::setMyFontSysColor(COLOR_WINDOWTEXT, dmlib::getDarkerTextColor());
-	dmlib_hook::setMyFontSysColor(COLOR_HIGHLIGHT, dmlib_color::kAccentBlue);
-	dmlib_hook::setMyFontSysColor(COLOR_HIGHLIGHTTEXT, dmlib::getTextColor());
-	dmlib_hook::setMyFontSysColor(COLOR_3DFACE, dmlib::getDlgBackgroundColor());
+	dmlib_hook::setMyComDlgSysColor(COLOR_WINDOW, dmlib::getBackgroundColor());
+	dmlib_hook::setMyComDlgSysColor(COLOR_WINDOWTEXT, dmlib::getDarkerTextColor());
+	dmlib_hook::setMyComDlgSysColor(COLOR_HIGHLIGHT, dmlib_color::kAccentBlue);
+	dmlib_hook::setMyComDlgSysColor(COLOR_HIGHLIGHTTEXT, dmlib::getTextColor());
+	dmlib_hook::setMyComDlgSysColor(COLOR_3DFACE, dmlib::getDlgBackgroundColor());
 }
 
 /**
@@ -4041,10 +4042,11 @@ static LRESULT CALLBACK ComDlgSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ComDlgSubclass, uIdSubclass);
-			dmlib_hook::unhookChooseFontDlgColors();
+			dmlib_hook::unhookComDlgColors();
 			break;
 		}
 
+		case WM_MOUSEMOVE: // for ChooseColor dialog luminosity slide control
 		case WM_PAINT: // for font preview background, control has id stc5 (0x444)
 		{
 			if (!dmlib::isEnabled())
@@ -4052,10 +4054,50 @@ static LRESULT CALLBACK ComDlgSubclass(
 				break;
 			}
 
-			dmlib_hook::hookChooseFontDlgColors();
+			dmlib_hook::hookComDlgColors();
 			const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			dmlib_hook::unhookChooseFontDlgColors();
+			dmlib_hook::unhookComDlgColors();
 			return resVal;
+		}
+
+		case WM_COMMAND: // for ChooseColor dialog luminosity slide control
+		{
+			if (!dmlib::isEnabled())
+			{
+				break;
+			}
+
+			if (HIWORD(wParam) == EN_CHANGE
+				&& (LOWORD(wParam) == COLOR_RED
+					|| LOWORD(wParam) == COLOR_GREEN
+					|| LOWORD(wParam) == COLOR_BLUE))
+			{
+				dmlib_hook::hookComDlgColors();
+				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::unhookComDlgColors();
+				return resVal;
+			}
+
+			if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == COLOR_LUM)
+			{
+				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+				RECT rcClient{};
+				::GetClientRect(hWnd, &rcClient);
+
+				RECT rcLum{};
+				::GetWindowRect(::GetDlgItem(hWnd, COLOR_LUMSCROLL), &rcLum);
+				::MapWindowPoints(nullptr, hWnd, reinterpret_cast<POINT*>(&rcLum), 2);
+
+				const LONG gap = rcLum.top - rcClient.top;
+				::InflateRect(&rcLum, 0, gap);
+				rcLum.right = rcClient.right;
+
+				::RedrawWindow(hWnd, &rcLum, nullptr, RDW_INVALIDATE);
+				return resVal;
+			}
+
+			break;
 		}
 
 		case WM_DRAWITEM: // for combo boxes and their list boxes
@@ -4067,9 +4109,9 @@ static LRESULT CALLBACK ComDlgSubclass(
 
 			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
 			{
-				dmlib_hook::hookChooseFontDlgColors();
+				dmlib_hook::hookComDlgColors();
 				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookChooseFontDlgColors();
+				dmlib_hook::unhookComDlgColors();
 				return resVal;
 			}
 

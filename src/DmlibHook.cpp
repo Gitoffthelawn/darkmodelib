@@ -553,13 +553,14 @@ void dmlib_hook::unhookThemeColor() noexcept
 	}
 }
 
-// Hooking for ChooseFont dialog
+// Hooking for ChooseFont and ChooseColor dialogs
 
 static HookData<decltype(&::GetSysColor)> g_hookDataFontGetSysColor{};
 static HookData<decltype(&::FillRect)> g_hookDataFontFillRect{};
+static HookData<decltype(&::GetSysColorBrush)> g_hookDataClrGetSysColorBrush{};
 
 static COLORREF g_clrFontWindow = RGB(32, 32, 32);
-static COLORREF g_clrFontText = RGB(192, 192, 192);
+static COLORREF g_clrFontClrText = RGB(192, 192, 192);
 static COLORREF g_clrFontHighlight = RGB(0, 120, 215);
 static COLORREF g_clrFontHighlightText = RGB(224, 224, 224);
 static COLORREF g_clrFontPreviewBg = RGB(32, 32, 32);
@@ -567,12 +568,14 @@ static COLORREF g_clrFontPreviewBg = RGB(32, 32, 32);
 static HBRUSH g_hBrushFontWindow = nullptr;
 static HBRUSH g_hBrushFontHighlight = nullptr;
 
+static HBRUSH g_hBrushClrLum = nullptr;
+
 /**
- * @brief Overrides a specific system color with a custom color for ChooseFont dialog.
+ * @brief Overrides a specific system color with a custom color for ChooseFont and ChooseColor dialogs.
  *
  * Currently supports:
  * - `COLOR_WINDOW`: Background of ComboBox lists.
- * - `COLOR_WINDOWTEXT`: Text color of ComboBox lists.
+ * - `COLOR_WINDOWTEXT`: Text color of ComboBox lists and luminosity slide control.
  * - `COLOR_HIGHLIGHT`: Highlighted background of ComboBox lists.
  * - `COLOR_HIGHLIGHTTEXT`: Highlighted text color of ComboBox lists.
  * - `COLOR_3DFACE`: Background color of font preview.
@@ -580,7 +583,7 @@ static HBRUSH g_hBrushFontHighlight = nullptr;
  * @param[in]   nIndex  One of the supported system color indices.
  * @param[in]   clr     Custom `COLORREF` value to apply.
  */
-void dmlib_hook::setMyFontSysColor(int nIndex, COLORREF clr) noexcept
+void dmlib_hook::setMyComDlgSysColor(int nIndex, COLORREF clr) noexcept
 {
 	switch (nIndex)
 	{
@@ -592,7 +595,7 @@ void dmlib_hook::setMyFontSysColor(int nIndex, COLORREF clr) noexcept
 
 		case COLOR_WINDOWTEXT:
 		{
-			g_clrFontText = clr;
+			g_clrFontClrText = clr;
 			break;
 		}
 
@@ -637,7 +640,7 @@ static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
 
 		case COLOR_WINDOWTEXT:
 		{
-			return g_clrFontText;
+			return g_clrFontClrText;
 		}
 
 		case COLOR_HIGHLIGHT:
@@ -688,18 +691,34 @@ static int WINAPI MyFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 		default:
 		{
 			hBrush = hbr;
+			break;
 		}
 	}
 
 	return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
 }
 
+static HBRUSH WINAPI MyGetSysColorBrush(int nIndex) noexcept
+{
+	if (!dmlib_win32api::IsDarkModeActive())
+	{
+		return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
+	}
+
+	if (nIndex == COLOR_BTNTEXT && g_hBrushClrLum != nullptr)
+	{
+		return g_hBrushClrLum;
+	}
+
+	return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
+}
+
 /**
- * @brief Hooks system color to support runtime customization for ChooseFont dialog.
+ * @brief Hooks system color to support runtime customization for ChooseFont and ChooseColor dialogs.
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookChooseFontDlgColors() noexcept
+bool dmlib_hook::hookComDlgColors() noexcept
 {
 	if (g_hBrushFontWindow == nullptr)
 	{
@@ -709,6 +728,11 @@ bool dmlib_hook::hookChooseFontDlgColors() noexcept
 	if (g_hBrushFontHighlight == nullptr)
 	{
 		g_hBrushFontHighlight = ::CreateSolidBrush(g_clrFontHighlight);
+	}
+
+	if (g_hBrushClrLum == nullptr)
+	{
+		g_hBrushClrLum = ::CreateSolidBrush(g_clrFontClrText);
 	}
 
 	return
@@ -725,17 +749,24 @@ bool dmlib_hook::hookChooseFontDlgColors() noexcept
 			MyFillRect,
 			"user32.dll",
 			static_cast<const char*>("FillRect"),
+			iat_hook::FindIatThunkInModule)
+		&& HookFunction<decltype(&::GetSysColorBrush)>(
+			g_hookDataClrGetSysColorBrush,
+			L"comdlg32.dll",
+			MyGetSysColorBrush,
+			"user32.dll",
+			static_cast<const char*>("GetSysColorBrush"),
 			iat_hook::FindIatThunkInModule);
 }
 
 /**
- * @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+ * @brief Unhooks system color overrides for ChooseFont and ChooseColor dialogs and restores default color behavior.
  *
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that system colors return to normal without requiring
  * prior state checks.
  */
-void dmlib_hook::unhookChooseFontDlgColors() noexcept
+void dmlib_hook::unhookComDlgColors() noexcept
 {
 	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
 	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
@@ -750,5 +781,11 @@ void dmlib_hook::unhookChooseFontDlgColors() noexcept
 	{
 		::DeleteObject(g_hBrushFontHighlight);
 		g_hBrushFontHighlight = nullptr;
+	}
+
+	if (g_hBrushClrLum != nullptr)
+	{
+		::DeleteObject(g_hBrushClrLum);
+		g_hBrushClrLum = nullptr;
 	}
 }

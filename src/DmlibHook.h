@@ -35,10 +35,10 @@ namespace dmlib_hook
 	/// Unhooks `GetThemeColor` and `DrawThemeBackgroundEx` overrides and restores default color behavior.
 	void unhookThemeColor() noexcept;
 
-	/// Overrides a specific system color with a custom color for ChooseFont dialog.
-	void setMyFontSysColor(int nIndex, COLORREF clr) noexcept;
-	/// Hooks system color to support runtime customization for ChooseFont dialog.
-	bool hookChooseFontDlgColors() noexcept;
-	/// Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
-	void unhookChooseFontDlgColors() noexcept;
+	/// Overrides a specific system color with a custom color for ChooseFont and ChooseColor dialogs.
+	void setMyComDlgSysColor(int nIndex, COLORREF clr) noexcept;
+	/// Hooks system color to support runtime customization for ChooseFont and ChooseColor dialogs.
+	bool hookComDlgColors() noexcept;
+	/// Unhooks system color overrides for ChooseFont and ChooseColor dialogs and restores default color behavior.
+	void unhookComDlgColors() noexcept;
 } // namespace dmlib_hook

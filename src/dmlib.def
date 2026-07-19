@@ -22,7 +22,7 @@ EXPORTS
 	handleSettingChange
 	isDarkModeReg
 	setSysColor
-	setChooseFontDlgColors
+	setCommonDlgsSysColors
 	enableDarkScrollBarForWindowAndChildren
 	setColorTone
 	getColorTone
