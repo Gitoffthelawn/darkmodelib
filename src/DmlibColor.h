@@ -27,6 +27,7 @@ namespace dmlib_color
 			| ((rrggbb & 0x0000FF) << 16);
 	}
 
+	/// Classic blue highlight color.
 	inline constexpr COLORREF kAccentBlue = dmlib_color::HEXRGB(0x0078D7);
 
 	/// Black tone (default)

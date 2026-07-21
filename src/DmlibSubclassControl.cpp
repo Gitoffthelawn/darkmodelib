@@ -458,7 +458,7 @@ LRESULT CALLBACK dmlib_subclass::ButtonSubclass(
 			}
 
 			// Skip the button's normal wndproc so it won't redraw out of wm_paint
-			const LRESULT retVal = ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
+			const auto retVal = ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
 			::InvalidateRect(hWnd, nullptr, FALSE);
 			return retVal;
 		}
@@ -2416,7 +2416,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxSubclass(
 				break;
 			}
 
-			const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE);
 			return retVal;
 		}
@@ -2617,10 +2617,9 @@ LRESULT CALLBACK dmlib_subclass::ListViewSubclass(
 				hasGridlines = (lvExStyle & LVS_EX_GRIDLINES) == LVS_EX_GRIDLINES;
 			}
 
-			if (hasGridlines)
+			if (hasGridlines && dmlib_hook::hookSysColor())
 			{
-				dmlib_hook::hookSysColor();
-				const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 				dmlib_hook::unhookSysColor();
 				return retVal;
 			}
@@ -3039,7 +3038,7 @@ LRESULT CALLBACK dmlib_subclass::HeaderSubclass(
 				break;
 			}
 
-			const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
 			pHeaderData->m_isHot = false;
 			pHeaderData->m_pt.x = LONG_MIN;
@@ -3124,11 +3123,11 @@ static void paintStatusBar(HWND hWnd, HDC hdc, dmlib_subclass::StatusBarData& st
 		rcPart.left += borders.between;
 		rcPart.right -= borders.vertical;
 
-		const LRESULT retValLen = ::SendMessage(hWnd, SB_GETTEXTLENGTH, static_cast<WPARAM>(i), 0);
+		const auto retValLen = ::SendMessage(hWnd, SB_GETTEXTLENGTH, static_cast<WPARAM>(i), 0);
 		const DWORD cchText = LOWORD(retValLen);
 
 		str.resize(static_cast<size_t>(cchText) + 1);
-		const LRESULT retValText = ::SendMessage(hWnd, SB_GETTEXT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(str.data()));
+		const auto retValText = ::SendMessage(hWnd, SB_GETTEXT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(str.data()));
 
 		// With `SBT_OWNERDRAW` flag parent will draw status bar.
 		if (cchText == 0 && (HIWORD(retValLen) & SBT_OWNERDRAW) != 0)
@@ -3729,10 +3728,13 @@ LRESULT CALLBACK dmlib_subclass::HotKeySubclass(
 				break;
 			}
 
-			dmlib_hook::hookSysColor();
-			const LRESULT resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			dmlib_hook::unhookSysColor();
-			return resVal;
+			if (dmlib_hook::hookSysColor())
+			{
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::unhookSysColor();
+				return retVal;
+			}
+			break;
 		}
 
 		default:
@@ -3782,10 +3784,13 @@ LRESULT CALLBACK dmlib_subclass::DTPSubclass(
 				break;
 			}
 
-			dmlib_hook::hookSysColor();
-			const LRESULT resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			dmlib_hook::unhookSysColor();
-			return resVal;
+			if (dmlib_hook::hookSysColor())
+			{
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::unhookSysColor();
+				return retVal;
+			}
+			break;
 		}
 
 		// for DTS_APPCANPARSE style

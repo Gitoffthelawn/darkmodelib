@@ -818,7 +818,7 @@ void dmlib::initDarkModeEx([[maybe_unused]] const wchar_t* iniName)
 		dmlib::setSysColor(COLOR_WINDOWTEXT, dmlib::getTextColor());
 		dmlib::setSysColor(COLOR_3DFACE, dmlib::getViewGridlinesColor());
 
-		dmlib::setCommonDlgsSysColors();
+		dmlib::updateCommonDlgsBrushes();
 
 		g_dmCfg.m_isInit = true;
 	}
@@ -1025,15 +1025,12 @@ void dmlib::setSysColor(int nIndex, COLORREF color)
 	dmlib_hook::setMySysColor(nIndex, color);
 }
 /**
- * @brief Overrides a specific system colors with a custom colors for ChooseFont and ChooseColor dialogs.
+ * @brief Updates custom color brushes for ChooseFont and ChooseColor dialogs.
  */
-void dmlib::setCommonDlgsSysColors()
+void dmlib::updateCommonDlgsBrushes()
 {
-	dmlib_hook::setMyComDlgSysColor(COLOR_WINDOW, dmlib::getBackgroundColor());
-	dmlib_hook::setMyComDlgSysColor(COLOR_WINDOWTEXT, dmlib::getDarkerTextColor());
-	dmlib_hook::setMyComDlgSysColor(COLOR_HIGHLIGHT, dmlib_color::kAccentBlue);
-	dmlib_hook::setMyComDlgSysColor(COLOR_HIGHLIGHTTEXT, dmlib::getTextColor());
-	dmlib_hook::setMyComDlgSysColor(COLOR_3DFACE, dmlib::getDlgBackgroundColor());
+	dmlib_hook::updateFontBrush();
+	dmlib_hook::updateLumSliderBrush();
 }
 
 /**
@@ -4029,30 +4026,6 @@ LRESULT dmlib::onCtlColorListbox(WPARAM wParam, LPARAM lParam)
 }
 
 /**
- * @brief Helper wrapper for window subclass procedure for customizing ChooseFont and ChooseColor dialogs.
- *
- * @param[in]   hWnd        Window handle being subclassed.
- * @param[in]   uMsg        Message identifier.
- * @param[in]   wParam      Message-specific data.
- * @param[in]   lParam      Message-specific data.
- * @return LRESULT Result of message processing.
- *
- * @see ComDlgSubclass()
- */
-static LRESULT hookedComDlgClrsDefSubclassProc(
-	HWND hWnd,
-	UINT uMsg,
-	WPARAM wParam,
-	LPARAM lParam
-) noexcept
-{
-	dmlib_hook::hookComDlgColors();
-	const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-	dmlib_hook::unhookComDlgColors();
-	return resVal;
-}
-
-/**
  * @brief Window subclass procedure for customizing ChooseFont and ChooseColor dialogs.
  *
  * @param[in]   hWnd        Window handle being subclassed.
@@ -4074,37 +4047,54 @@ static LRESULT CALLBACK ComDlgSubclass(
 	[[maybe_unused]] DWORD_PTR dwRefData
 ) noexcept
 {
+	if (!dmlib::isEnabled() && uMsg != WM_NCDESTROY)
+	{
+		return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	}
+
 	switch (uMsg)
 	{
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ComDlgSubclass, uIdSubclass);
-			dmlib_hook::unhookComDlgColors();
+			dmlib_hook::unhookFontSysColor();
+			dmlib_hook::unhookFontFillRect();
+			dmlib_hook::unhookClrGetSysColorBrush();
 			dmlib_hook::unhookFontDlgMB();
 			break;
 		}
 
 		case WM_MOUSEMOVE: // for ChooseColor dialog luminosity slide control
-		case WM_PAINT: // for font preview background, control has id stc5 (0x444)
 		{
-			if (!dmlib::isEnabled())
+			if (dmlib_hook::hookClrGetSysColorBrush())
 			{
-				break;
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::unhookClrGetSysColorBrush();
+				return retVal;
 			}
+			break;
+		}
 
-			return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
+		case WM_PAINT: // for font preview background, control has id stc5 (0x444) and for ChooseColor dialog luminosity slide control
+		{
+			dmlib_hook::hookFontSysColor();
+			dmlib_hook::hookClrGetSysColorBrush();
+			const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			dmlib_hook::unhookFontSysColor();
+			dmlib_hook::unhookClrGetSysColorBrush();
+			return retVal;
 		}
 
 		case WM_DRAWITEM: // for combo boxes and their list boxes
 		{
-			if (!dmlib::isEnabled())
-			{
-				break;
-			}
-
 			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
 			{
-				return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::hookFontSysColor();
+				dmlib_hook::hookFontFillRect();
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				dmlib_hook::unhookFontSysColor();
+				dmlib_hook::unhookFontFillRect();
+				return retVal;
 			}
 
 			break;
@@ -4112,11 +4102,6 @@ static LRESULT CALLBACK ComDlgSubclass(
 
 		case WM_COMMAND: // for ChooseColor dialog luminosity slide control
 		{
-			if (!dmlib::isEnabled())
-			{
-				break;
-			}
-
 			const int id = LOWORD(wParam);
 			const int nCode = HIWORD(wParam);
 
@@ -4125,12 +4110,18 @@ static LRESULT CALLBACK ComDlgSubclass(
 					|| id == COLOR_GREEN
 					|| id == COLOR_BLUE))
 			{
-				return hookedComDlgClrsDefSubclassProc(hWnd, uMsg, wParam, lParam);
+				if (dmlib_hook::hookClrGetSysColorBrush())
+				{
+					const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+					dmlib_hook::unhookClrGetSysColorBrush();
+					return retVal;
+				}
+				break;
 			}
 
 			if (nCode == EN_CHANGE && id == COLOR_LUM)
 			{
-				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
 				RECT rcClient{};
 				::GetClientRect(hWnd, &rcClient);
@@ -4145,16 +4136,20 @@ static LRESULT CALLBACK ComDlgSubclass(
 				rcLum.right = rcClient.right;
 
 				::RedrawWindow(hWnd, &rcLum, nullptr, RDW_INVALIDATE);
-				return resVal;
+				return retVal;
 			}
 
 			if (id == IDOK && nCode == BN_CLICKED) // for ChooseFont dialog message boxes
 			{
-				dmlib_hook::hookFontDlgMB();
-				const auto resVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookFontDlgMB();
-				return resVal;
+				if (dmlib_hook::hookFontDlgMB())
+				{
+					const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+					dmlib_hook::unhookFontDlgMB();
+					return retVal;
+				}
+				break;
 			}
+
 			break;
 		}
 
@@ -4238,7 +4233,7 @@ HRESULT dmlib::darkTaskDialogIndirect(
 )
 {
 	dmlib_hook::hookThemeColor();
-	const HRESULT retVal = ::TaskDialogIndirect(pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
+	const auto retVal = ::TaskDialogIndirect(pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
 	dmlib_hook::unhookThemeColor();
 	return retVal;
 }

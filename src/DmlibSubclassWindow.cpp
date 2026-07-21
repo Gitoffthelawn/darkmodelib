@@ -1343,7 +1343,7 @@ LRESULT CALLBACK dmlib_subclass::WindowMenuBarSubclass(
 		case WM_NCACTIVATE:
 		case WM_NCPAINT:
 		{
-			const LRESULT retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			drawUAHMenuNCBottomLine(hWnd);
 			return retVal;
 		}

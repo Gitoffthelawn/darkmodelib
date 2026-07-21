@@ -39,10 +39,32 @@ namespace dmlib_win32api
 	[[nodiscard]] bool IsDarkModeActive() noexcept;
 } // namespace dmlib_win32api
 
+#ifdef DMLIB_DLL
+	#if defined(DMLIB_EXPORTS)
+		#define DMLIB_API __declspec(dllexport)
+	#else
+		#define DMLIB_API __declspec(dllimport)
+	#endif
+#else
+	#define DMLIB_API
+#endif
+
 namespace dmlib
 {
-	extern "C" int darkMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+	extern "C"
+	{
+		[[nodiscard]] DMLIB_API COLORREF getBackgroundColor();
+		[[nodiscard]] DMLIB_API COLORREF getDlgBackgroundColor();
+		[[nodiscard]] DMLIB_API COLORREF getTextColor();
+		[[nodiscard]] DMLIB_API COLORREF getDarkerTextColor();
+
+		[[nodiscard]] DMLIB_API HBRUSH getBackgroundBrush();
+
+		DMLIB_API int darkMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+	}
 }
+
+static constexpr COLORREF kAccentBlue = RGB(0, 120, 215); // same as in dmlib_color
 
 using fnFindThunkInModule = auto (*)(void* moduleBase, const char* dllName, const char* funcName) -> PIMAGE_THUNK_DATA;
 
@@ -377,7 +399,7 @@ static HRESULT WINAPI MyGetThemeColor(
 	COLORREF* pColor
 ) noexcept
 {
-	const HRESULT retVal = g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
+	const auto retVal = g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
 	if (!dmlib_win32api::IsDarkModeActive() || pColor == nullptr)
 	{
 		return retVal;
@@ -539,6 +561,7 @@ void dmlib_hook::unhookThemeColor() noexcept
 {
 	UnhookFunction<decltype(&::GetThemeColor)>(g_hookDataGetThemeColor);
 	UnhookFunction<decltype(&::DrawThemeBackgroundEx)>(g_hookDataDrawThemeBackgroundEx);
+
 	if (g_hDarkTheme != nullptr && g_hookDataGetThemeColor.m_ref == 0)
 	{
 		::CloseThemeData(g_hDarkTheme);
@@ -566,71 +589,47 @@ static HookData<decltype(&::GetSysColorBrush)> g_hookDataClrGetSysColorBrush{};
 
 static HookData<decltype(&::MessageBoxW)> g_hookDataFontMessageBoxW{};
 
-static COLORREF g_clrFontWindow = RGB(32, 32, 32);
-static COLORREF g_clrFontClrText = RGB(192, 192, 192);
-static COLORREF g_clrFontHighlight = RGB(0, 120, 215);
-static COLORREF g_clrFontHighlightText = RGB(224, 224, 224);
-static COLORREF g_clrFontPreviewBg = RGB(32, 32, 32);
-
-static HBRUSH g_hBrushFontWindow = nullptr;
 static HBRUSH g_hBrushFontHighlight = nullptr;
-
 static HBRUSH g_hBrushClrLum = nullptr;
 
 /**
- * @brief Overrides a specific system color with a custom color for ChooseFont and ChooseColor dialogs.
+ * @brief Updates highlight brush for ChooseFont dialog.
+ */
+void dmlib_hook::updateFontBrush() noexcept
+{
+	if (g_hBrushFontHighlight != nullptr)
+	{
+		::DeleteObject(g_hBrushFontHighlight);
+		g_hBrushFontHighlight = nullptr;
+	}
+	g_hBrushFontHighlight = ::CreateSolidBrush(kAccentBlue);
+}
+
+/**
+ * @brief Updates luminosity slider brush for ChooseColor dialog.
+ */
+void dmlib_hook::updateLumSliderBrush() noexcept
+{
+	if (g_hBrushClrLum != nullptr)
+	{
+		::DeleteObject(g_hBrushClrLum);
+		g_hBrushClrLum = nullptr;
+	}
+	g_hBrushClrLum = ::CreateSolidBrush(dmlib::getDarkerTextColor());
+}
+
+/**
+ * @brief Returns a custom color instead of a specific system color for ChooseFont and ChooseColor dialogs.
  *
- * Currently supports:
+ * Specific replaced system colors:
  * - `COLOR_WINDOW`: Background of ComboBox lists.
  * - `COLOR_WINDOWTEXT`: Text color of ComboBox lists and luminosity slide control.
  * - `COLOR_HIGHLIGHT`: Highlighted background of ComboBox lists.
  * - `COLOR_HIGHLIGHTTEXT`: Highlighted text color of ComboBox lists.
  * - `COLOR_3DFACE`: Background color of font preview.
  *
- * @param[in]   nIndex  One of the supported system color indices.
- * @param[in]   clr     Custom `COLORREF` value to apply.
+ * @return DWORD color value.
  */
-void dmlib_hook::setMyComDlgSysColor(int nIndex, COLORREF clr) noexcept
-{
-	switch (nIndex)
-	{
-		case COLOR_WINDOW:
-		{
-			g_clrFontWindow = clr;
-			break;
-		}
-
-		case COLOR_WINDOWTEXT:
-		{
-			g_clrFontClrText = clr;
-			break;
-		}
-
-		case COLOR_HIGHLIGHT:
-		{
-			g_clrFontHighlight = clr;
-			break;
-		}
-
-		case COLOR_HIGHLIGHTTEXT:
-		{
-			g_clrFontHighlightText = clr;
-			break;
-		}
-
-		case COLOR_3DFACE:
-		{
-			g_clrFontPreviewBg = clr;
-			break;
-		}
-
-		default:
-		{
-			break;
-		}
-	}
-}
-
 static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
 {
 	if (!dmlib_win32api::IsDarkModeActive())
@@ -642,34 +641,35 @@ static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
 	{
 		case COLOR_WINDOW:
 		{
-			return g_clrFontWindow;
+			return dmlib::getBackgroundColor();
 		}
 
 		case COLOR_WINDOWTEXT:
 		{
-			return g_clrFontClrText;
+			return dmlib::getDarkerTextColor();
 		}
 
 		case COLOR_HIGHLIGHT:
 		{
-			return g_clrFontHighlight;
+			return kAccentBlue;
 		}
 
 		case COLOR_HIGHLIGHTTEXT:
 		{
-			return g_clrFontHighlightText;
+			return dmlib::getTextColor();
 		}
 
 		case COLOR_BTNFACE:
 		{
-			return g_clrFontPreviewBg;
+			return dmlib::getDlgBackgroundColor();
 		}
 
 		default:
 		{
-			return g_hookDataFontGetSysColor.m_trueFn(nIndex);
+			break;
 		}
 	}
+	return g_hookDataFontGetSysColor.m_trueFn(nIndex);
 }
 
 static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
@@ -685,7 +685,7 @@ static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 	{
 		case COLOR_WINDOW + 1:
 		{
-			hBrush = g_hBrushFontWindow;
+			hBrush = dmlib::getBackgroundBrush();
 			break;
 		}
 
@@ -730,27 +730,12 @@ static int WINAPI MyFontMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption
 }
 
 /**
- * @brief Hooks system color to support runtime customization for ChooseFont and ChooseColor dialogs.
+ * @brief Hooks system color to support runtime customization for ChooseFont dialog.
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookComDlgColors() noexcept
+bool dmlib_hook::hookFontSysColor() noexcept
 {
-	if (g_hBrushFontWindow == nullptr)
-	{
-		g_hBrushFontWindow = ::CreateSolidBrush(g_clrFontWindow);
-	}
-
-	if (g_hBrushFontHighlight == nullptr)
-	{
-		g_hBrushFontHighlight = ::CreateSolidBrush(g_clrFontHighlight);
-	}
-
-	if (g_hBrushClrLum == nullptr)
-	{
-		g_hBrushClrLum = ::CreateSolidBrush(g_clrFontClrText);
-	}
-
 	return
 		HookFunction<decltype(&::GetSysColor)>(
 			g_hookDataFontGetSysColor,
@@ -758,15 +743,69 @@ bool dmlib_hook::hookComDlgColors() noexcept
 			MyFontGetSysColor,
 			"user32.dll",
 			static_cast<const char*>("GetSysColor"),
-			iat_hook::FindIatThunkInModule)
-		&& HookFunction<decltype(&::FillRect)>(
+			iat_hook::FindIatThunkInModule);
+}
+
+/**
+ * @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+ *
+ * This function is safe to call even if no color hook is currently installed.
+ * It ensures that system colors return to normal without requiring
+ * prior state checks.
+ */
+void dmlib_hook::unhookFontSysColor() noexcept
+{
+	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
+}
+
+/**
+ * @brief Hooks ::FillRect to support runtime customization for ChooseFont dialog.
+ *
+ * @return `true` if the hook was installed successfully.
+ */
+bool dmlib_hook::hookFontFillRect() noexcept
+{
+	dmlib_hook::updateFontBrush();
+
+	return
+		HookFunction<decltype(&::FillRect)>(
 			g_hookDataFontFillRect,
 			L"comdlg32.dll",
 			MyFontFillRect,
 			"user32.dll",
 			static_cast<const char*>("FillRect"),
-			iat_hook::FindIatThunkInModule)
-		&& HookFunction<decltype(&::GetSysColorBrush)>(
+			iat_hook::FindIatThunkInModule);
+}
+
+/**
+ * @brief Unhooks ::FillRect override for ChooseFont dialog and restores default behavior.
+ *
+ * This function is safe to call even if no color hook is currently installed.
+ * It ensures that ::FillRect return to normal without requiring
+ * prior state checks.
+ */
+void dmlib_hook::unhookFontFillRect() noexcept
+{
+	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
+
+	if (g_hBrushFontHighlight != nullptr)
+	{
+		::DeleteObject(g_hBrushFontHighlight);
+		g_hBrushFontHighlight = nullptr;
+	}
+}
+
+/**
+ * @brief Hooks system color brush to support runtime customization for ChooseColor dialog luminosity slider control.
+ *
+ * @return `true` if the hook was installed successfully.
+ */
+bool dmlib_hook::hookClrGetSysColorBrush() noexcept
+{
+	dmlib_hook::updateLumSliderBrush();
+
+	return
+		HookFunction<decltype(&::GetSysColorBrush)>(
 			g_hookDataClrGetSysColorBrush,
 			L"comdlg32.dll",
 			MyClrGetSysColorBrush,
@@ -776,29 +815,15 @@ bool dmlib_hook::hookComDlgColors() noexcept
 }
 
 /**
- * @brief Unhooks system color overrides for ChooseFont and ChooseColor dialogs and restores default color behavior.
+ * @brief Unhooks ::GetSysColorBrush override for ChooseColor dialogs and restores default behavior.
  *
  * This function is safe to call even if no color hook is currently installed.
- * It ensures that system colors return to normal without requiring
+ * It ensures that ::GetSysColorBrush return to normal without requiring
  * prior state checks.
  */
-void dmlib_hook::unhookComDlgColors() noexcept
+void dmlib_hook::unhookClrGetSysColorBrush() noexcept
 {
-	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
-	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
 	UnhookFunction<decltype(&::GetSysColorBrush)>(g_hookDataClrGetSysColorBrush);
-
-	if (g_hBrushFontWindow != nullptr)
-	{
-		::DeleteObject(g_hBrushFontWindow);
-		g_hBrushFontWindow = nullptr;
-	}
-
-	if (g_hBrushFontHighlight != nullptr)
-	{
-		::DeleteObject(g_hBrushFontHighlight);
-		g_hBrushFontHighlight = nullptr;
-	}
 
 	if (g_hBrushClrLum != nullptr)
 	{
