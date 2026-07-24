@@ -53,12 +53,16 @@ namespace dmlib
 {
 	extern "C"
 	{
+		[[nodiscard]] DMLIB_API bool isEnabled();
+
 		[[nodiscard]] DMLIB_API COLORREF getBackgroundColor();
+		[[nodiscard]] DMLIB_API COLORREF getCtrlBackgroundColor();
 		[[nodiscard]] DMLIB_API COLORREF getDlgBackgroundColor();
 		[[nodiscard]] DMLIB_API COLORREF getTextColor();
 		[[nodiscard]] DMLIB_API COLORREF getDarkerTextColor();
 
 		[[nodiscard]] DMLIB_API HBRUSH getBackgroundBrush();
+		[[nodiscard]] DMLIB_API HBRUSH getCtrlBackgroundBrush();
 
 		DMLIB_API int darkMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
 	}
@@ -66,7 +70,7 @@ namespace dmlib
 
 static constexpr COLORREF kAccentBlue = RGB(0, 120, 215); // same as in dmlib_color
 
-using fnFindThunkInModule = auto (*)(void* moduleBase, const char* dllName, const char* funcName) -> PIMAGE_THUNK_DATA;
+using FindThunkInModule_t = auto (*)(void* moduleBase, const char* dllName, const char* funcName) -> PIMAGE_THUNK_DATA;
 
 template <typename P>
 static auto ReplaceFunction(IMAGE_THUNK_DATA* addr, const P& newFunction) noexcept -> P
@@ -92,11 +96,11 @@ struct HookData
 	const wchar_t* m_hookedDll = nullptr;
 
 	const char* m_fnName = nullptr;
-	fnFindThunkInModule m_findFn = nullptr;
+	FindThunkInModule_t m_findFn = nullptr;
 
 	std::uint16_t m_ord = 0;
 
-	void init(const char* fromDll, const char* funcName, const fnFindThunkInModule& findFn) noexcept
+	void init(const char* fromDll, const char* funcName, const FindThunkInModule_t& findFn) noexcept
 	{
 		if (m_fromDll == nullptr)
 		{
@@ -122,7 +126,9 @@ struct HookData
 
 	[[nodiscard]] IMAGE_THUNK_DATA* findAddr(HMODULE hMod) const noexcept
 	{
-		if (m_fnName != nullptr && m_findFn != nullptr)
+		if (m_fnName != nullptr
+			&& m_findFn != nullptr
+			&& m_ord == 0)
 		{
 			return m_findFn(hMod, m_fromDll, m_fnName);
 		}
@@ -166,12 +172,17 @@ static auto HookFunction(HookData<T>& hookData, const wchar_t* hookedDll, T newF
 }
 
 template <typename T>
-static void UnhookFunction(HookData<T>& hookData) noexcept
+static size_t UnhookFunction(HookData<T>& hookData, bool forceDetach = false) noexcept
 {
 	const dmlib_module::ModuleHandle hookedMod(hookData.m_hookedDll);
 	if (!hookedMod.isLoaded())
 	{
-		return;
+		return 0;
+	}
+
+	if (forceDetach && hookData.m_ref > 1)
+	{
+		hookData.m_ref = 1;
 	}
 
 	if (hookData.m_ref > 0)
@@ -188,6 +199,7 @@ static void UnhookFunction(HookData<T>& hookData) noexcept
 			}
 		}
 	}
+	return hookData.m_ref;
 }
 
 #if defined(_DARKMODELIB_USE_SCROLLBAR_FIX) && (_DARKMODELIB_USE_SCROLLBAR_FIX > 0)
@@ -322,33 +334,36 @@ void dmlib_hook::setMySysColor(int nIndex, COLORREF clr) noexcept
 	}
 }
 
-static DWORD WINAPI MyGetSysColor(int nIndex) noexcept
+extern "C"
 {
-	if (!dmlib_win32api::IsDarkModeActive())
+	static DWORD WINAPI MyGetSysColor(int nIndex) noexcept
 	{
-		return g_hookDataGetSysColor.m_trueFn(nIndex);
-	}
-
-	switch (nIndex)
-	{
-		case COLOR_WINDOW:
-		{
-			return g_clrWindow;
-		}
-
-		case COLOR_WINDOWTEXT:
-		{
-			return g_clrText;
-		}
-
-		case COLOR_3DFACE:
-		{
-			return g_clrGridlines;
-		}
-
-		default:
+		if (!dmlib_win32api::IsDarkModeActive())
 		{
 			return g_hookDataGetSysColor.m_trueFn(nIndex);
+		}
+
+		switch (nIndex)
+		{
+			case COLOR_WINDOW:
+			{
+				return g_clrWindow;
+			}
+
+			case COLOR_WINDOWTEXT:
+			{
+				return g_clrText;
+			}
+
+			case COLOR_3DFACE:
+			{
+				return g_clrGridlines;
+			}
+
+			default:
+			{
+				return g_hookDataGetSysColor.m_trueFn(nIndex);
+			}
 		}
 	}
 }
@@ -358,7 +373,7 @@ static DWORD WINAPI MyGetSysColor(int nIndex) noexcept
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookSysColor() noexcept
+bool dmlib_hook::GetSysColor::hook() noexcept
 {
 	return HookFunction<decltype(&::GetSysColor)>(
 		g_hookDataGetSysColor,
@@ -376,9 +391,9 @@ bool dmlib_hook::hookSysColor() noexcept
  * It ensures that system colors return to normal without requiring
  * prior state checks.
  */
-void dmlib_hook::unhookSysColor() noexcept
+size_t dmlib_hook::GetSysColor::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataGetSysColor);
+	return UnhookFunction(g_hookDataGetSysColor, forceDetach);
 }
 
 // Hooking GetThemeColor for Task Dialog text color
@@ -391,56 +406,62 @@ static COLORREF g_otherTextClr = RGB(255, 255, 255);
 
 static HTHEME g_hDarkTheme = nullptr;
 
-static HRESULT WINAPI MyGetThemeColor(
-	HTHEME hTheme,
-	int iPartId,
-	int iStateId,
-	int iPropId,
-	COLORREF* pColor
-) noexcept
+extern "C"
 {
-	const auto retVal = g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
-	if (!dmlib_win32api::IsDarkModeActive() || pColor == nullptr)
+	static HRESULT WINAPI MyGetThemeColor(
+		HTHEME hTheme,
+		int iPartId,
+		int iStateId,
+		int iPropId,
+		COLORREF* pColor
+	) noexcept
 	{
-		return retVal;
-	}
-
-	if (iPropId == TMT_TEXTCOLOR)
-	{
-		switch (iPartId)
+		if (!dmlib_win32api::IsDarkModeActive() || pColor == nullptr)
 		{
-			case TDLG_MAININSTRUCTIONPANE:
-			{
-				*pColor = g_mainInstructionTextClr;
-				break;
-			}
+			return g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
+		}
 
-			case TDLG_CONTENTPANE:
-			case TDLG_EXPANDOTEXT:
-			case TDLG_VERIFICATIONTEXT:
-			case TDLG_FOOTNOTEPANE:
-			case TDLG_EXPANDEDFOOTERAREA:
+		if (iPropId == TMT_TEXTCOLOR)
+		{
+			switch (iPartId)
 			{
-				if (g_hDarkTheme != nullptr)
+				case TDLG_MAININSTRUCTIONPANE:
 				{
-					g_hookDataGetThemeColor.m_trueFn(g_hDarkTheme, iPartId, iStateId, iPropId, pColor);
+					*pColor = g_mainInstructionTextClr;
+					return S_OK;
 				}
-				else
-				{
-					*pColor = g_otherTextClr;
-				}
-				break;
-			}
 
-			default:
-			{
-				break;
+				case TDLG_CONTENTPANE:
+				case TDLG_EXPANDOTEXT:
+				case TDLG_VERIFICATIONTEXT:
+				case TDLG_FOOTNOTEPANE:
+				case TDLG_EXPANDEDFOOTERAREA:
+				{
+					if (g_hDarkTheme != nullptr)
+					{
+						if (const auto retVal = g_hookDataGetThemeColor.m_trueFn(g_hDarkTheme, iPartId, iStateId, iPropId, pColor);
+							SUCCEEDED(retVal))
+						{
+							return S_OK;
+						}
+					}
+					else
+					{
+						*pColor = g_otherTextClr;
+						return S_OK;
+					}
+					break;
+				}
+
+				default:
+				{
+					break;
+				}
 			}
 		}
+		return g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
 	}
-	return retVal;
 }
-
 static constexpr std::uint16_t kDrawThemeBackgroundExOrdinal = 47;
 
 static constexpr COLORREF kMainPaneBgClr = RGB(44, 44, 44);
@@ -449,41 +470,44 @@ static constexpr COLORREF kFooterBgClr = RGB(32, 32, 32);
 static HBRUSH g_hBrushBg = nullptr;
 static HBRUSH g_hBrushBgFooter = nullptr;
 
-static HRESULT WINAPI MyDrawThemeBackgroundEx(
-	HTHEME hTheme,
-	HDC hdc,
-	int iPartId,
-	int iStateId,
-	LPCRECT pRect,
-	const DTBGOPTS* pOptions
-) noexcept
+extern "C"
 {
-	if (!dmlib_win32api::IsDarkModeActive() || pOptions == nullptr)
+	static HRESULT WINAPI MyDrawThemeBackgroundEx(
+		HTHEME hTheme,
+		HDC hdc,
+		int iPartId,
+		int iStateId,
+		LPCRECT pRect,
+		const DTBGOPTS* pOptions
+	) noexcept
 	{
-		return g_hookDataDrawThemeBackgroundEx.m_trueFn(hTheme, hdc, iPartId, iStateId, pRect, pOptions);
-	}
-
-	switch (iPartId)
-	{
-		case TDLG_PRIMARYPANEL:
-		{
-			::FillRect(hdc, pRect, g_hBrushBg);
-			break;
-		}
-
-		case TDLG_SECONDARYPANEL:
-		case TDLG_FOOTNOTEPANE:
-		{
-			::FillRect(hdc, &pOptions->rcClip, g_hBrushBgFooter);
-			break;
-		}
-
-		default:
+		if (!dmlib_win32api::IsDarkModeActive() || pOptions == nullptr)
 		{
 			return g_hookDataDrawThemeBackgroundEx.m_trueFn(hTheme, hdc, iPartId, iStateId, pRect, pOptions);
 		}
+
+		switch (iPartId)
+		{
+			case TDLG_PRIMARYPANEL:
+			{
+				::FillRect(hdc, pRect, g_hBrushBg);
+				break;
+			}
+
+			case TDLG_SECONDARYPANEL:
+			case TDLG_FOOTNOTEPANE:
+			{
+				::FillRect(hdc, &pOptions->rcClip, g_hBrushBgFooter);
+				break;
+			}
+
+			default:
+			{
+				return g_hookDataDrawThemeBackgroundEx.m_trueFn(hTheme, hdc, iPartId, iStateId, pRect, pOptions);
+			}
+		}
+		return S_OK;
 	}
-	return S_OK;
 }
 
 /**
@@ -491,7 +515,7 @@ static HRESULT WINAPI MyDrawThemeBackgroundEx(
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookThemeColor() noexcept
+bool dmlib_hook::TaskDlgTheme::hook() noexcept
 {
 	COLORREF clrMain = kMainPaneBgClr;
 	COLORREF clrFooter = kFooterBgClr;
@@ -540,7 +564,7 @@ bool dmlib_hook::hookThemeColor() noexcept
 			MyGetThemeColor,
 			"uxtheme.dll",
 			static_cast<const char*>("GetThemeColor"),
-			static_cast<fnFindThunkInModule>(iat_hook::FindDelayLoadThunkInModule))
+			static_cast<FindThunkInModule_t>(iat_hook::FindDelayLoadThunkInModule))
 		&& HookFunction<decltype(&::DrawThemeBackgroundEx)>(
 			g_hookDataDrawThemeBackgroundEx,
 			L"comctl32.dll",
@@ -557,10 +581,10 @@ bool dmlib_hook::hookThemeColor() noexcept
  * It ensures that theme colors return to normal without requiring
  * prior state checks.
  */
-void dmlib_hook::unhookThemeColor() noexcept
+size_t dmlib_hook::TaskDlgTheme::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::GetThemeColor)>(g_hookDataGetThemeColor);
-	UnhookFunction<decltype(&::DrawThemeBackgroundEx)>(g_hookDataDrawThemeBackgroundEx);
+	const auto count = UnhookFunction(g_hookDataGetThemeColor, forceDetach);
+	UnhookFunction(g_hookDataDrawThemeBackgroundEx, forceDetach);
 
 	if (g_hDarkTheme != nullptr && g_hookDataGetThemeColor.m_ref == 0)
 	{
@@ -568,17 +592,19 @@ void dmlib_hook::unhookThemeColor() noexcept
 		g_hDarkTheme = nullptr;
 	}
 
-	if (g_hBrushBg != nullptr)
+	if (g_hBrushBg != nullptr && g_hookDataDrawThemeBackgroundEx.m_ref == 0)
 	{
 		::DeleteObject(g_hBrushBg);
 		g_hBrushBg = nullptr;
 	}
 
-	if (g_hBrushBgFooter != nullptr)
+	if (g_hBrushBgFooter != nullptr && g_hookDataDrawThemeBackgroundEx.m_ref == 0)
 	{
 		::DeleteObject(g_hBrushBgFooter);
 		g_hBrushBgFooter = nullptr;
 	}
+
+	return count;
 }
 
 // Hooking for ChooseFont and ChooseColor dialogs
@@ -618,6 +644,8 @@ void dmlib_hook::updateLumSliderBrush() noexcept
 	g_hBrushClrLum = ::CreateSolidBrush(dmlib::getDarkerTextColor());
 }
 
+extern "C"
+{
 /**
  * @brief Returns a custom color instead of a specific system color for ChooseFont and ChooseColor dialogs.
  *
@@ -630,111 +658,112 @@ void dmlib_hook::updateLumSliderBrush() noexcept
  *
  * @return DWORD color value.
  */
-static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
-{
-	if (!dmlib_win32api::IsDarkModeActive())
+	static DWORD WINAPI MyFontGetSysColor(int nIndex) noexcept
 	{
+		if (!dmlib::isEnabled())
+		{
+			return g_hookDataFontGetSysColor.m_trueFn(nIndex);
+		}
+
+		switch (nIndex)
+		{
+			case COLOR_WINDOW:
+			{
+				return dmlib_win32api::IsDarkModeActive() ? dmlib::getBackgroundColor() : dmlib::getCtrlBackgroundColor();
+			}
+
+			case COLOR_WINDOWTEXT:
+			{
+				return dmlib::getDarkerTextColor();
+			}
+
+			case COLOR_HIGHLIGHT:
+			{
+				return kAccentBlue;
+			}
+
+			case COLOR_HIGHLIGHTTEXT:
+			{
+				return dmlib::getTextColor();
+			}
+
+			case COLOR_BTNFACE:
+			{
+				return dmlib::getDlgBackgroundColor();
+			}
+
+			default:
+			{
+				break;
+			}
+		}
 		return g_hookDataFontGetSysColor.m_trueFn(nIndex);
 	}
 
-	switch (nIndex)
+	static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 	{
-		case COLOR_WINDOW:
+		if (!dmlib::isEnabled())
 		{
-			return dmlib::getBackgroundColor();
+			return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hbr);
 		}
 
-		case COLOR_WINDOWTEXT:
+		HBRUSH hBrush = nullptr;
+
+		switch (reinterpret_cast<UINT_PTR>(hbr))
 		{
-			return dmlib::getDarkerTextColor();
+			case COLOR_WINDOW + 1:
+			{
+				hBrush = dmlib_win32api::IsDarkModeActive() ? dmlib::getBackgroundBrush() : dmlib::getCtrlBackgroundBrush();
+				break;
+			}
+
+			case COLOR_HIGHLIGHT + 1:
+			{
+				hBrush = g_hBrushFontHighlight;
+				break;
+			}
+
+			default:
+			{
+				hBrush = hbr;
+				break;
+			}
 		}
 
-		case COLOR_HIGHLIGHT:
-		{
-			return kAccentBlue;
-		}
-
-		case COLOR_HIGHLIGHTTEXT:
-		{
-			return dmlib::getTextColor();
-		}
-
-		case COLOR_BTNFACE:
-		{
-			return dmlib::getDlgBackgroundColor();
-		}
-
-		default:
-		{
-			break;
-		}
-	}
-	return g_hookDataFontGetSysColor.m_trueFn(nIndex);
-}
-
-static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
-{
-	if (!dmlib_win32api::IsDarkModeActive())
-	{
-		return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hbr);
+		return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
 	}
 
-	HBRUSH hBrush = nullptr;
-
-	switch (reinterpret_cast<UINT_PTR>(hbr))
+	static HBRUSH WINAPI MyClrGetSysColorBrush(int nIndex) noexcept
 	{
-		case COLOR_WINDOW + 1:
+		if (!dmlib::isEnabled())
 		{
-			hBrush = dmlib::getBackgroundBrush();
-			break;
+			return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
 		}
 
-		case COLOR_HIGHLIGHT + 1:
+		if (nIndex == COLOR_BTNTEXT && g_hBrushClrLum != nullptr)
 		{
-			hBrush = g_hBrushFontHighlight;
-			break;
+			return g_hBrushClrLum;
 		}
 
-		default:
-		{
-			hBrush = hbr;
-			break;
-		}
-	}
-
-	return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
-}
-
-static HBRUSH WINAPI MyClrGetSysColorBrush(int nIndex) noexcept
-{
-	if (!dmlib_win32api::IsDarkModeActive())
-	{
 		return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
 	}
 
-	if (nIndex == COLOR_BTNTEXT && g_hBrushClrLum != nullptr)
+	static int WINAPI MyFontMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) noexcept
 	{
-		return g_hBrushClrLum;
+		if (!dmlib_win32api::IsDarkModeActive() || uType != MB_ICONINFORMATION)
+		{
+			return g_hookDataFontMessageBoxW.m_trueFn(hWnd, lpText, lpCaption, uType);
+		}
+		return dmlib::darkMessageBoxW(hWnd, lpText, lpCaption, uType);
 	}
-
-	return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
-}
-
-static int WINAPI MyFontMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) noexcept
-{
-	if (!dmlib_win32api::IsDarkModeActive() || uType != MB_ICONINFORMATION)
-	{
-		return g_hookDataFontMessageBoxW.m_trueFn(hWnd, lpText, lpCaption, uType);
-	}
-	return dmlib::darkMessageBoxW(hWnd, lpText, lpCaption, uType);
 }
 
 /**
- * @brief Hooks system color to support runtime customization for ChooseFont dialog.
- *
- * @return `true` if the hook was installed successfully.
- */
-bool dmlib_hook::hookFontSysColor() noexcept
+* @brief Hooks system color to support runtime customization for ChooseFont dialog.
+*
+* @return `true` if the hook was installed successfully.
+*/
+bool dmlib_hook::FontSysColor::hook() noexcept
 {
 	return
 		HookFunction<decltype(&::GetSysColor)>(
@@ -747,15 +776,17 @@ bool dmlib_hook::hookFontSysColor() noexcept
 }
 
 /**
- * @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
- *
- * This function is safe to call even if no color hook is currently installed.
- * It ensures that system colors return to normal without requiring
- * prior state checks.
- */
-void dmlib_hook::unhookFontSysColor() noexcept
+* @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+*
+* This function is safe to call even if no color hook is currently installed.
+* It ensures that system colors return to normal without requiring
+* prior state checks.
+*
+* @return size_t count of hook "installs".
+*/
+size_t dmlib_hook::FontSysColor::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::GetSysColor)>(g_hookDataFontGetSysColor);
+	return UnhookFunction(g_hookDataFontGetSysColor, forceDetach);
 }
 
 /**
@@ -763,7 +794,7 @@ void dmlib_hook::unhookFontSysColor() noexcept
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookFontFillRect() noexcept
+bool dmlib_hook::FontFillRect::hook() noexcept
 {
 	dmlib_hook::updateFontBrush();
 
@@ -783,16 +814,20 @@ bool dmlib_hook::hookFontFillRect() noexcept
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that ::FillRect return to normal without requiring
  * prior state checks.
+ *
+ * @return size_t count of hook "installs".
  */
-void dmlib_hook::unhookFontFillRect() noexcept
+size_t dmlib_hook::FontFillRect::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::FillRect)>(g_hookDataFontFillRect);
+	const auto count = UnhookFunction(g_hookDataFontFillRect, forceDetach);
 
 	if (g_hBrushFontHighlight != nullptr)
 	{
 		::DeleteObject(g_hBrushFontHighlight);
 		g_hBrushFontHighlight = nullptr;
 	}
+
+	return count;
 }
 
 /**
@@ -800,7 +835,7 @@ void dmlib_hook::unhookFontFillRect() noexcept
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookClrGetSysColorBrush() noexcept
+bool dmlib_hook::ClrGetSysColorBrush::hook() noexcept
 {
 	dmlib_hook::updateLumSliderBrush();
 
@@ -820,16 +855,20 @@ bool dmlib_hook::hookClrGetSysColorBrush() noexcept
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that ::GetSysColorBrush return to normal without requiring
  * prior state checks.
+ *
+ * @return size_t count of hook "installs".
  */
-void dmlib_hook::unhookClrGetSysColorBrush() noexcept
+size_t dmlib_hook::ClrGetSysColorBrush::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::GetSysColorBrush)>(g_hookDataClrGetSysColorBrush);
+	const auto count = UnhookFunction(g_hookDataClrGetSysColorBrush, forceDetach);
 
 	if (g_hBrushClrLum != nullptr)
 	{
 		::DeleteObject(g_hBrushClrLum);
 		g_hBrushClrLum = nullptr;
 	}
+
+	return count;
 }
 
 /**
@@ -837,7 +876,7 @@ void dmlib_hook::unhookClrGetSysColorBrush() noexcept
  *
  * @return `true` if the hook was installed successfully.
  */
-bool dmlib_hook::hookFontDlgMB() noexcept
+bool dmlib_hook::FontMB::hook() noexcept
 {
 	return HookFunction<decltype(&::MessageBoxW)>(
 		g_hookDataFontMessageBoxW,
@@ -854,7 +893,7 @@ bool dmlib_hook::hookFontDlgMB() noexcept
  * It ensures that message box return to normal without requiring
  * prior state checks.
  */
-void dmlib_hook::unhookFontDlgMB() noexcept
+size_t dmlib_hook::FontMB::unhook(bool forceDetach) noexcept
 {
-	UnhookFunction<decltype(&::MessageBoxW)>(g_hookDataFontMessageBoxW);
+	return UnhookFunction(g_hookDataFontMessageBoxW, forceDetach);
 }

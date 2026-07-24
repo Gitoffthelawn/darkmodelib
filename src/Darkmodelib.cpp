@@ -1614,7 +1614,7 @@ void dmlib::setComboBoxExCtrlSubclass(HWND hWnd)
 void dmlib::removeComboBoxExCtrlSubclass(HWND hWnd)
 {
 	dmlib_subclass::RemoveSubclass(hWnd, dmlib_subclass::ComboBoxExSubclass, dmlib_subclass::SubclassID::comboBoxEx);
-	dmlib_hook::unhookSysColor();
+	dmlib_hook::GetSysColor::unhook();
 }
 
 /**
@@ -4057,44 +4057,33 @@ static LRESULT CALLBACK ComDlgSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ComDlgSubclass, uIdSubclass);
-			dmlib_hook::unhookFontSysColor();
-			dmlib_hook::unhookFontFillRect();
-			dmlib_hook::unhookClrGetSysColorBrush();
-			dmlib_hook::unhookFontDlgMB();
 			break;
 		}
 
 		case WM_MOUSEMOVE: // for ChooseColor dialog luminosity slide control
 		{
-			if (dmlib_hook::hookClrGetSysColorBrush())
+			if (const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::ClrGetSysColorBrush>();
+				autoHook)
 			{
-				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookClrGetSysColorBrush();
-				return retVal;
+				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 			break;
 		}
 
 		case WM_PAINT: // for font preview background, control has id stc5 (0x444) and for ChooseColor dialog luminosity slide control
 		{
-			dmlib_hook::hookFontSysColor();
-			dmlib_hook::hookClrGetSysColorBrush();
-			const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-			dmlib_hook::unhookFontSysColor();
-			dmlib_hook::unhookClrGetSysColorBrush();
-			return retVal;
+			const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontSysColor>();
+			const auto ahClrGetSysColorBrush = dmlib_hook::AutoHook<dmlib_hook::ClrGetSysColorBrush>();
+			return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 		}
 
 		case WM_DRAWITEM: // for combo boxes and their list boxes
 		{
 			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
 			{
-				dmlib_hook::hookFontSysColor();
-				dmlib_hook::hookFontFillRect();
-				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookFontSysColor();
-				dmlib_hook::unhookFontFillRect();
-				return retVal;
+				const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontSysColor>();
+				const auto ahFontFillRect = dmlib_hook::AutoHook<dmlib_hook::FontFillRect>();
+				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 
 			break;
@@ -4110,11 +4099,10 @@ static LRESULT CALLBACK ComDlgSubclass(
 					|| id == COLOR_GREEN
 					|| id == COLOR_BLUE))
 			{
-				if (dmlib_hook::hookClrGetSysColorBrush())
+				if (const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::ClrGetSysColorBrush>();
+					autoHook)
 				{
-					const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-					dmlib_hook::unhookClrGetSysColorBrush();
-					return retVal;
+					return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 				}
 				break;
 			}
@@ -4141,11 +4129,10 @@ static LRESULT CALLBACK ComDlgSubclass(
 
 			if (id == IDOK && nCode == BN_CLICKED) // for ChooseFont dialog message boxes
 			{
-				if (dmlib_hook::hookFontDlgMB())
+				if (const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::FontMB>();
+					autoHook)
 				{
-					const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-					dmlib_hook::unhookFontDlgMB();
-					return retVal;
+					return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 				}
 				break;
 			}
@@ -4232,10 +4219,8 @@ HRESULT dmlib::darkTaskDialogIndirect(
 	BOOL* pfVerificationFlagChecked
 )
 {
-	dmlib_hook::hookThemeColor();
-	const auto retVal = ::TaskDialogIndirect(pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
-	dmlib_hook::unhookThemeColor();
-	return retVal;
+	const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::TaskDlgTheme>();
+	return ::TaskDialogIndirect(pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
 }
 
 /**

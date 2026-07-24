@@ -2457,7 +2457,7 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxExSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ComboBoxExSubclass, uIdSubclass);
-			dmlib_hook::unhookSysColor();
+			dmlib_hook::GetSysColor::unhook();
 			break;
 		}
 
@@ -2506,13 +2506,13 @@ LRESULT CALLBACK dmlib_subclass::ComboBoxExSubclass(
 			{
 				case CBN_DROPDOWN:
 				{
-					dmlib_hook::hookSysColor();
+					dmlib_hook::GetSysColor::hook();
 					break;
 				}
 
 				case CBN_CLOSEUP:
 				{
-					dmlib_hook::unhookSysColor();
+					dmlib_hook::GetSysColor::unhook();
 					break;
 				}
 
@@ -2596,7 +2596,6 @@ LRESULT CALLBACK dmlib_subclass::ListViewSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, ListViewSubclass, uIdSubclass);
-			dmlib_hook::unhookSysColor();
 			break;
 		}
 
@@ -2617,11 +2616,10 @@ LRESULT CALLBACK dmlib_subclass::ListViewSubclass(
 				hasGridlines = (lvExStyle & LVS_EX_GRIDLINES) == LVS_EX_GRIDLINES;
 			}
 
-			if (hasGridlines && dmlib_hook::hookSysColor())
+			if (hasGridlines)
 			{
-				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookSysColor();
-				return retVal;
+				auto const autoHook = dmlib_hook::AutoHook<dmlib_hook::GetSysColor>();
+				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 			break;
 		}
@@ -3704,7 +3702,6 @@ LRESULT CALLBACK dmlib_subclass::HotKeySubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, HotKeySubclass, uIdSubclass);
-			dmlib_hook::unhookSysColor();
 			break;
 		}
 
@@ -3728,11 +3725,10 @@ LRESULT CALLBACK dmlib_subclass::HotKeySubclass(
 				break;
 			}
 
-			if (dmlib_hook::hookSysColor())
+			if (const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::GetSysColor>();
+				autoHook)
 			{
-				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookSysColor();
-				return retVal;
+				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 			break;
 		}
@@ -3773,7 +3769,6 @@ LRESULT CALLBACK dmlib_subclass::DTPSubclass(
 		case WM_NCDESTROY:
 		{
 			::RemoveWindowSubclass(hWnd, DTPSubclass, uIdSubclass);
-			dmlib_hook::unhookSysColor();
 			break;
 		}
 
@@ -3784,11 +3779,10 @@ LRESULT CALLBACK dmlib_subclass::DTPSubclass(
 				break;
 			}
 
-			if (dmlib_hook::hookSysColor())
+			if (const auto autoHook = dmlib_hook::AutoHook<dmlib_hook::GetSysColor>();
+				autoHook)
 			{
-				const auto retVal = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
-				dmlib_hook::unhookSysColor();
-				return retVal;
+				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}
 			break;
 		}
