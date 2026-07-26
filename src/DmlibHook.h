@@ -55,22 +55,22 @@ namespace dmlib_hook
 	void fixDarkScrollBar();
 #endif
 
-	/// Overrides a specific system color with a custom color.
+	/// Sets a custom color for specific system color for override function.
 	void setMySysColor(int nIndex, COLORREF clr) noexcept;
 
 	struct GetSysColor
 	{
-		/// Hooks system color to support runtime customization.
+		/// Hooks `::GetSysColor` to support runtime customization.
 		static bool hook() noexcept;
-		/// Unhooks system color overrides and restores default color behavior.
+		/// Unhooks `::GetSysColor` overrides.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 
 	struct TaskDlgTheme
 	{
-		/// Hooks `GetThemeColor` and `DrawThemeBackgroundEx` to support dark colors.
+		/// Hooks `::GetThemeColor` and `::DrawThemeBackgroundEx` to support dark colors.
 		static bool hook() noexcept;
-		/// Unhooks `GetThemeColor` and `DrawThemeBackgroundEx` overrides and restores default color behavior.
+		/// Unhooks `::GetThemeColor` and `::DrawThemeBackgroundEx` overrides.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 
@@ -79,35 +79,35 @@ namespace dmlib_hook
 	/// Updates luminosity slider brush for ChooseColor dialog.
 	void updateLumSliderBrush() noexcept;
 
-	struct FontSysColor
+	struct FontGetSysColor
 	{
-		/// Hooks system color to support runtime customization for ChooseFont dialog.
+		/// Hooks `::GetSysColor` to support runtime customization for ChooseFont dialog.
 		static bool hook() noexcept;
-		/// Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+		/// Unhooks `::GetSysColor` overrides for ChooseFont dialog.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 
 	struct FontFillRect
 	{
-		/// Hooks ::FillRect to support runtime customization for ChooseFont dialog.
+		/// Hooks `::FillRect` to support runtime customization for ChooseFont dialog.
 		static bool hook() noexcept;
-		/// Unhooks ::FillRect override for ChooseFont dialog and restores default behavior.
+		/// Unhooks `::FillRect` override for ChooseFont dialog.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 
 	struct ClrGetSysColorBrush
 	{
-		/// Hooks system color brush to support runtime customization for ChooseColor dialog luminosity slider control.
+		/// Hooks `::GetSysColorBrush` to support runtime customization for ChooseColor dialog luminosity slider control.
 		static bool hook() noexcept;
-		/// Unhooks ::GetSysColorBrush override for ChooseColor dialogs and restores default behavior.
+		/// Unhooks `::GetSysColorBrush` override for ChooseColor dialogs.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 
 	struct FontMB
 	{
-		/// Hooks ::MessageBoxW to apply dark mode for ChooseFont dialog message boxes.
+		/// Hooks `::MessageBoxW` to apply dark mode for ChooseFont dialog message boxes.
 		static bool hook() noexcept;
-		/// Unhooks ChooseFont dialog ::MessageBoxW.
+		/// Unhooks ChooseFont dialog `::MessageBoxW`.
 		static size_t unhook(bool forceDetach = false) noexcept;
 	};
 } // namespace dmlib_hook

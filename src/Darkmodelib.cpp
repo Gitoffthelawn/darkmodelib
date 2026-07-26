@@ -4072,7 +4072,7 @@ static LRESULT CALLBACK ComDlgSubclass(
 
 		case WM_PAINT: // for font preview background, control has id stc5 (0x444) and for ChooseColor dialog luminosity slide control
 		{
-			const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontSysColor>();
+			const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontGetSysColor>();
 			const auto ahClrGetSysColorBrush = dmlib_hook::AutoHook<dmlib_hook::ClrGetSysColorBrush>();
 			return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 		}
@@ -4081,7 +4081,7 @@ static LRESULT CALLBACK ComDlgSubclass(
 		{
 			if (wParam == cmb1 || wParam == cmb2 || wParam == cmb3 || wParam == cmb4 || wParam == cmb5)
 			{
-				const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontSysColor>();
+				const auto ahFontSysColor = dmlib_hook::AutoHook<dmlib_hook::FontGetSysColor>();
 				const auto ahFontFillRect = dmlib_hook::AutoHook<dmlib_hook::FontFillRect>();
 				return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 			}

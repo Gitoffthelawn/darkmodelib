@@ -295,7 +295,7 @@ static COLORREF g_clrText = RGB(224, 224, 224);
 static COLORREF g_clrGridlines = RGB(100, 100, 100);
 
 /**
- * @brief Overrides a specific system color with a custom color.
+ * @brief Sets a custom color for specific system color for override function.
  *
  * Currently supports:
  * - `COLOR_WINDOW`: Background of ComboBoxEx list.
@@ -366,10 +366,10 @@ extern "C"
 			}
 		}
 	}
-}
+} // extern "C"
 
 /**
- * @brief Hooks system color to support runtime customization.
+ * @brief Hooks `::GetSysColor` to support runtime customization.
  *
  * @return `true` if the hook was installed successfully.
  */
@@ -385,7 +385,7 @@ bool dmlib_hook::GetSysColor::hook() noexcept
 }
 
 /**
- * @brief Unhooks system color overrides and restores default color behavior.
+ * @brief Unhooks `::GetSysColor` overrides.
  *
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that system colors return to normal without requiring
@@ -396,7 +396,7 @@ size_t dmlib_hook::GetSysColor::unhook(bool forceDetach) noexcept
 	return UnhookFunction(g_hookDataGetSysColor, forceDetach);
 }
 
-// Hooking GetThemeColor for Task Dialog text color
+// Hooking `::GetThemeColor` and `::DrawThemeBackgroundEx` for Task Dialog text color
 
 static HookData<decltype(&::GetThemeColor)> g_hookDataGetThemeColor{};
 static HookData<decltype(&::DrawThemeBackgroundEx)> g_hookDataDrawThemeBackgroundEx{};
@@ -461,7 +461,8 @@ extern "C"
 		}
 		return g_hookDataGetThemeColor.m_trueFn(hTheme, iPartId, iStateId, iPropId, pColor);
 	}
-}
+} // extern "C"
+
 static constexpr std::uint16_t kDrawThemeBackgroundExOrdinal = 47;
 
 static constexpr COLORREF kMainPaneBgClr = RGB(44, 44, 44);
@@ -508,10 +509,10 @@ extern "C"
 		}
 		return S_OK;
 	}
-}
+} // extern "C"
 
 /**
- * @brief Hooks `GetThemeColor` and `DrawThemeBackgroundEx` to support dark colors.
+ * @brief Hooks `::GetThemeColor` and `::DrawThemeBackgroundEx` to support dark colors.
  *
  * @return `true` if the hook was installed successfully.
  */
@@ -575,7 +576,7 @@ bool dmlib_hook::TaskDlgTheme::hook() noexcept
 
 
 /**
- * @brief Unhooks `GetThemeColor` and `DrawThemeBackgroundEx` overrides and restores default color behavior.
+ * @brief Unhooks `::GetThemeColor` and `::DrawThemeBackgroundEx` overrides.
  *
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that theme colors return to normal without requiring
@@ -700,6 +701,16 @@ extern "C"
 		return g_hookDataFontGetSysColor.m_trueFn(nIndex);
 	}
 
+	/**
+	 * @brief Changes system brushes for `::FillRect` for ChooseFont dialog.
+	 *
+	 * Changes system brushes (`COLOR_WINDOW` and `COLOR_HIGHLIGHT`)
+	 * for `::FillRect` to override background colors for ChooseFont dialog combo box list boxes.
+	 *
+	 * @return int value, same as `::FillRect`.
+	 * @return If the function succeeds, the return value is nonzero.
+	 * @return If the function fails, the return value is zero.
+	 */
 	static int WINAPI MyFontFillRect(HDC hDC, const RECT* lprc, HBRUSH hbr) noexcept
 	{
 		if (!dmlib::isEnabled())
@@ -733,6 +744,14 @@ extern "C"
 		return g_hookDataFontFillRect.m_trueFn(hDC, lprc, hBrush);
 	}
 
+	/**
+	 * @brief Changes returned system brush for `::GetSysColorBrush` for ChooseColor dialog.
+	 *
+	 * Changes system brush (`COLOR_BTNTEXT`) to override color
+	 * for ChooseColor dialog luminosity slider control.
+	 *
+	 * @return HBRUSH, same as `::GetSysColorBrush`.
+	 */
 	static HBRUSH WINAPI MyClrGetSysColorBrush(int nIndex) noexcept
 	{
 		if (!dmlib::isEnabled())
@@ -748,6 +767,11 @@ extern "C"
 		return g_hookDataClrGetSysColorBrush.m_trueFn(nIndex);
 	}
 
+	/**
+	 * @brief Replaces `::MessageBoxW` with `dmlib::darkMessageBoxW` for ChooseFont dialog.
+	 *
+	 * @return int, same as `::MessageBoxW`.
+	 */
 	static int WINAPI MyFontMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) noexcept
 	{
 		if (!dmlib_win32api::IsDarkModeActive() || uType != MB_ICONINFORMATION)
@@ -756,14 +780,14 @@ extern "C"
 		}
 		return dmlib::darkMessageBoxW(hWnd, lpText, lpCaption, uType);
 	}
-}
+} // extern "C"
 
 /**
-* @brief Hooks system color to support runtime customization for ChooseFont dialog.
+* @brief Hooks `::GetSysColor` to support runtime customization for ChooseFont dialog.
 *
 * @return `true` if the hook was installed successfully.
 */
-bool dmlib_hook::FontSysColor::hook() noexcept
+bool dmlib_hook::FontGetSysColor::hook() noexcept
 {
 	return
 		HookFunction<decltype(&::GetSysColor)>(
@@ -776,7 +800,7 @@ bool dmlib_hook::FontSysColor::hook() noexcept
 }
 
 /**
-* @brief Unhooks system color overrides for ChooseFont dialog and restores default color behavior.
+* @brief Unhooks `::GetSysColor` overrides for ChooseFont dialog.
 *
 * This function is safe to call even if no color hook is currently installed.
 * It ensures that system colors return to normal without requiring
@@ -784,7 +808,7 @@ bool dmlib_hook::FontSysColor::hook() noexcept
 *
 * @return size_t count of hook "installs".
 */
-size_t dmlib_hook::FontSysColor::unhook(bool forceDetach) noexcept
+size_t dmlib_hook::FontGetSysColor::unhook(bool forceDetach) noexcept
 {
 	return UnhookFunction(g_hookDataFontGetSysColor, forceDetach);
 }
@@ -809,7 +833,7 @@ bool dmlib_hook::FontFillRect::hook() noexcept
 }
 
 /**
- * @brief Unhooks ::FillRect override for ChooseFont dialog and restores default behavior.
+ * @brief Unhooks ::FillRect override for ChooseFont dialog.
  *
  * This function is safe to call even if no color hook is currently installed.
  * It ensures that ::FillRect return to normal without requiring
@@ -831,7 +855,7 @@ size_t dmlib_hook::FontFillRect::unhook(bool forceDetach) noexcept
 }
 
 /**
- * @brief Hooks system color brush to support runtime customization for ChooseColor dialog luminosity slider control.
+ * @brief Hooks `::GetSysColorBrush` to support runtime customization for ChooseColor dialog luminosity slider control.
  *
  * @return `true` if the hook was installed successfully.
  */
@@ -850,10 +874,10 @@ bool dmlib_hook::ClrGetSysColorBrush::hook() noexcept
 }
 
 /**
- * @brief Unhooks ::GetSysColorBrush override for ChooseColor dialogs and restores default behavior.
+ * @brief Unhooks `::GetSysColorBrush` override for ChooseColor dialogs.
  *
  * This function is safe to call even if no color hook is currently installed.
- * It ensures that ::GetSysColorBrush return to normal without requiring
+ * It ensures that `::GetSysColorBrush` return to normal without requiring
  * prior state checks.
  *
  * @return size_t count of hook "installs".
@@ -872,7 +896,7 @@ size_t dmlib_hook::ClrGetSysColorBrush::unhook(bool forceDetach) noexcept
 }
 
 /**
- * @brief Hooks MessageBoxW to apply dark mode for ChooseFont dialog message boxes.
+ * @brief Hooks `::MessageBoxW` to apply dark mode for ChooseFont dialog message boxes.
  *
  * @return `true` if the hook was installed successfully.
  */
@@ -887,7 +911,7 @@ bool dmlib_hook::FontMB::hook() noexcept
 		iat_hook::FindIatThunkInModule);
 }
 /**
- * @brief Unhooks ChooseFont dialog MessageBoxW.
+ * @brief Unhooks ChooseFont dialog `::MessageBoxW`.
  *
  * This function is safe to call even if no message box hook is currently installed.
  * It ensures that message box return to normal without requiring

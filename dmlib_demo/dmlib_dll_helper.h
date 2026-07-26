@@ -425,560 +425,560 @@ namespace dmlib
 		inline void DummySetDarkTaskDlg(HWND) {}
 		inline HRESULT CALLBACK DummyDarkTaskDlgCallback(HWND, UINT, WPARAM, LPARAM, LONG_PTR) { return S_OK; }
 		inline HRESULT DummyDarkTaskDialogIndirect(const TASKDIALOGCONFIG*, int*, int*, BOOL*) { return S_OK; }
-		inline int DummyDarkMessageBoxW(HWND , LPCWSTR , LPCWSTR , UINT ) { return 0; }
+		inline int DummyDarkMessageBoxW(HWND, LPCWSTR, LPCWSTR, UINT) { return 0; }
 	}
 
-	using fnGetLibInfo = auto (*)(int libInfoType) -> int;
-	inline fnGetLibInfo getLibInfo = nullptr;
+	using getLibInfo_t = auto (*)(int libInfoType) -> int;
+	inline getLibInfo_t getLibInfo = nullptr;
 
-	using fnInitDarkModeConfig = void (*)(UINT dmType);
-	inline fnInitDarkModeConfig initDarkModeConfig = nullptr;
+	using initDarkModeConfig_t = void (*)(UINT dmType);
+	inline initDarkModeConfig_t initDarkModeConfig = nullptr;
 
-	using fnSetRoundCornerConfig = void (*)(UINT roundCornerStyle);
-	inline fnSetRoundCornerConfig setRoundCornerConfig = nullptr;
+	using setRoundCornerConfig_t = void (*)(UINT roundCornerStyle);
+	inline setRoundCornerConfig_t setRoundCornerConfig = nullptr;
 
-	using fnSetBorderColorConfig = void (*)(COLORREF clr);
-	inline fnSetBorderColorConfig setBorderColorConfig = nullptr;
+	using setBorderColorConfig_t = void (*)(COLORREF clr);
+	inline setBorderColorConfig_t setBorderColorConfig = nullptr;
 
-	using fnSetMicaConfig = void (*)(UINT mica);
-	inline fnSetMicaConfig setMicaConfig = nullptr;
+	using setMicaConfig_t = void (*)(UINT mica);
+	inline setMicaConfig_t setMicaConfig = nullptr;
 
-	using fnSetMicaExtendedConfig = void (*)(bool extendMica);
-	inline fnSetMicaExtendedConfig setMicaExtendedConfig = nullptr;
+	using setMicaExtendedConfig_t = void (*)(bool extendMica);
+	inline setMicaExtendedConfig_t setMicaExtendedConfig = nullptr;
 
-	using fnSetColorizeTitleBarConfig = void (*)(bool colorize);
-	inline fnSetColorizeTitleBarConfig setColorizeTitleBarConfig = nullptr;
+	using setColorizeTitleBarConfig_t = void (*)(bool colorize);
+	inline setColorizeTitleBarConfig_t setColorizeTitleBarConfig = nullptr;
 
-	using fnSetDarkModeConfigEx = void (*)(UINT dmType);
-	inline fnSetDarkModeConfigEx setDarkModeConfigEx = nullptr;
+	using setDarkModeConfigEx_t = void (*)(UINT dmType);
+	inline setDarkModeConfigEx_t setDarkModeConfigEx = nullptr;
 
-	using fnSetDarkModeConfig = void (*)();
-	inline fnSetDarkModeConfig setDarkModeConfig = nullptr;
+	using setDarkModeConfig_t = void (*)();
+	inline setDarkModeConfig_t setDarkModeConfig = nullptr;
 
-	using fnInitDarkModeEx = void (*)(const wchar_t* iniName);
-	inline fnInitDarkModeEx initDarkModeEx = nullptr;
+	using initDarkModeEx_t = void (*)(const wchar_t* iniName);
+	inline initDarkModeEx_t initDarkModeEx = nullptr;
 
-	using fnInitDarkMode = void (*)();
-	inline fnInitDarkMode initDarkMode = nullptr;
+	using initDarkMode_t = void (*)();
+	inline initDarkMode_t initDarkMode = nullptr;
 
-	using fnDoesConfigFileExist = auto (*)() -> bool;
-	inline fnDoesConfigFileExist doesConfigFileExist = nullptr;
+	using doesConfigFileExist_t = auto (*)() -> bool;
+	inline doesConfigFileExist_t doesConfigFileExist = nullptr;
 
-	using fnIsEnabled = auto (*)() -> bool;
-	inline fnIsEnabled isEnabled = nullptr;
+	using isEnabled_t = auto (*)() -> bool;
+	inline isEnabled_t isEnabled = nullptr;
 
-	using fnIsExperimentalActive = auto (*)() -> bool;
-	inline fnIsExperimentalActive isExperimentalActive = nullptr;
+	using isExperimentalActive_t = auto (*)() -> bool;
+	inline isExperimentalActive_t isExperimentalActive = nullptr;
 
-	using fnIsExperimentalSupported = auto (*)() -> bool;
-	inline fnIsExperimentalSupported isExperimentalSupported = nullptr;
+	using isExperimentalSupported_t = auto (*)() -> bool;
+	inline isExperimentalSupported_t isExperimentalSupported = nullptr;
 
-	using fnIsWindowsModeEnabled = auto (*)() -> bool;
-	inline fnIsWindowsModeEnabled isWindowsModeEnabled = nullptr;
+	using isWindowsModeEnabled_t = auto (*)() -> bool;
+	inline isWindowsModeEnabled_t isWindowsModeEnabled = nullptr;
 
-	using fnIsAtLeastWindows10 = auto (*)() -> bool;
-	inline fnIsAtLeastWindows10 isAtLeastWindows10 = nullptr;
+	using isAtLeastWindows10_t = auto (*)() -> bool;
+	inline isAtLeastWindows10_t isAtLeastWindows10 = nullptr;
 
-	using fnIsAtLeastWindows11 = auto (*)() -> bool;
-	inline fnIsAtLeastWindows11 isAtLeastWindows11 = nullptr;
+	using isAtLeastWindows11_t = auto (*)() -> bool;
+	inline isAtLeastWindows11_t isAtLeastWindows11 = nullptr;
 
-	using fnGetWindowsBuildNumber = auto (*)() -> DWORD;
-	inline fnGetWindowsBuildNumber getWindowsBuildNumber = nullptr;
+	using getWindowsBuildNumber_t = auto (*)() -> DWORD;
+	inline getWindowsBuildNumber_t getWindowsBuildNumber = nullptr;
 
-	using fnHandleSettingChange = auto (*)(LPARAM lParam) -> bool;
-	inline fnHandleSettingChange handleSettingChange = nullptr;
+	using handleSettingChange_t = auto (*)(LPARAM lParam) -> bool;
+	inline handleSettingChange_t handleSettingChange = nullptr;
 
-	using fnIsDarkModeReg = auto (*)() -> bool;
-	inline fnIsDarkModeReg isDarkModeReg = nullptr;
+	using isDarkModeReg_t = auto (*)() -> bool;
+	inline isDarkModeReg_t isDarkModeReg = nullptr;
 
-	using fnSetSysColor = auto (*)(int nIndex, COLORREF color) -> void;
-	inline fnSetSysColor setSysColor = nullptr;
+	using setSysColor_t = auto (*)(int nIndex, COLORREF color) -> void;
+	inline setSysColor_t setSysColor = nullptr;
 
-	using fnUpdateCommonDlgsBrushes = auto (*)() -> void;
-	inline fnUpdateCommonDlgsBrushes updateCommonDlgsBrushes = nullptr;
+	using updateCommonDlgsBrushes_t = auto (*)() -> void;
+	inline updateCommonDlgsBrushes_t updateCommonDlgsBrushes = nullptr;
 
-	using fnEnableDarkScrollBarForWindowAndChildren = auto (*)(HWND hWnd) -> void;
-	inline fnEnableDarkScrollBarForWindowAndChildren enableDarkScrollBarForWindowAndChildren = nullptr;
+	using enableDarkScrollBarForWindowAndChildren_t = auto (*)(HWND hWnd) -> void;
+	inline enableDarkScrollBarForWindowAndChildren_t enableDarkScrollBarForWindowAndChildren = nullptr;
 
-	using fnSetColorTone = void (*)(int colorTone);
-	inline fnSetColorTone setColorTone = nullptr;
+	using setColorTone_t = void (*)(int colorTone);
+	inline setColorTone_t setColorTone = nullptr;
 
-	using fnGetColorTone = auto (*)() -> int;
-	inline fnGetColorTone getColorTone = nullptr;
+	using getColorTone_t = auto (*)() -> int;
+	inline getColorTone_t getColorTone = nullptr;
 
-	using fnSetBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetBackgroundColor setBackgroundColor = nullptr;
+	using setBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setBackgroundColor_t setBackgroundColor = nullptr;
 
-	using fnSetCtrlBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetCtrlBackgroundColor setCtrlBackgroundColor = nullptr;
+	using setCtrlBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setCtrlBackgroundColor_t setCtrlBackgroundColor = nullptr;
 
-	using fnSetHotBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHotBackgroundColor setHotBackgroundColor = nullptr;
+	using setHotBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHotBackgroundColor_t setHotBackgroundColor = nullptr;
 
-	using fnSetDlgBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetDlgBackgroundColor setDlgBackgroundColor = nullptr;
+	using setDlgBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setDlgBackgroundColor_t setDlgBackgroundColor = nullptr;
 
-	using fnSetErrorBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetErrorBackgroundColor setErrorBackgroundColor = nullptr;
+	using setErrorBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setErrorBackgroundColor_t setErrorBackgroundColor = nullptr;
 
-	using fnSetTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetTextColor setTextColor = nullptr;
+	using setTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setTextColor_t setTextColor = nullptr;
 
-	using fnSetDarkerTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetDarkerTextColor setDarkerTextColor = nullptr;
+	using setDarkerTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setDarkerTextColor_t setDarkerTextColor = nullptr;
 
-	using fnSetDisabledTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetDisabledTextColor setDisabledTextColor = nullptr;
+	using setDisabledTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setDisabledTextColor_t setDisabledTextColor = nullptr;
 
-	using fnSetLinkTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetLinkTextColor setLinkTextColor = nullptr;
+	using setLinkTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setLinkTextColor_t setLinkTextColor = nullptr;
 
-	using fnSetEdgeColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetEdgeColor setEdgeColor = nullptr;
+	using setEdgeColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setEdgeColor_t setEdgeColor = nullptr;
 
-	using fnSetHotEdgeColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHotEdgeColor setHotEdgeColor = nullptr;
+	using setHotEdgeColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHotEdgeColor_t setHotEdgeColor = nullptr;
 
-	using fnSetDisabledEdgeColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetDisabledEdgeColor setDisabledEdgeColor = nullptr;
+	using setDisabledEdgeColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setDisabledEdgeColor_t setDisabledEdgeColor = nullptr;
 
-	using fnSetHighlightColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHighlightColor setHighlightColor = nullptr;
+	using setHighlightColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHighlightColor_t setHighlightColor = nullptr;
 
-	using fnSetThemeColors = void (*)(Colors colors);
-	inline fnSetThemeColors setThemeColors = nullptr;
+	using setThemeColors_t = void (*)(Colors colors);
+	inline setThemeColors_t setThemeColors = nullptr;
 
-	using fnUpdateThemeBrushesAndPens = void (*)();
-	inline fnUpdateThemeBrushesAndPens updateThemeBrushesAndPens = nullptr;
+	using updateThemeBrushesAndPens_t = void (*)();
+	inline updateThemeBrushesAndPens_t updateThemeBrushesAndPens = nullptr;
 
-	using fnGetBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetBackgroundColor getBackgroundColor = nullptr;
+	using getBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getBackgroundColor_t getBackgroundColor = nullptr;
 
-	using fnGetCtrlBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetCtrlBackgroundColor getCtrlBackgroundColor = nullptr;
+	using getCtrlBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getCtrlBackgroundColor_t getCtrlBackgroundColor = nullptr;
 
-	using fnGetHotBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetHotBackgroundColor getHotBackgroundColor = nullptr;
+	using getHotBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getHotBackgroundColor_t getHotBackgroundColor = nullptr;
 
-	using fnGetDlgBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetDlgBackgroundColor getDlgBackgroundColor = nullptr;
+	using getDlgBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getDlgBackgroundColor_t getDlgBackgroundColor = nullptr;
 
-	using fnGetErrorBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetErrorBackgroundColor getErrorBackgroundColor = nullptr;
+	using getErrorBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getErrorBackgroundColor_t getErrorBackgroundColor = nullptr;
 
-	using fnGetTextColor = auto (*)() -> COLORREF;
-	inline fnGetTextColor getTextColor = nullptr;
+	using getTextColor_t = auto (*)() -> COLORREF;
+	inline getTextColor_t getTextColor = nullptr;
 
-	using fnGetDarkerTextColor = auto (*)() -> COLORREF;
-	inline fnGetDarkerTextColor getDarkerTextColor = nullptr;
+	using getDarkerTextColor_t = auto (*)() -> COLORREF;
+	inline getDarkerTextColor_t getDarkerTextColor = nullptr;
 
-	using fnGetDisabledTextColor = auto (*)() -> COLORREF;
-	inline fnGetDisabledTextColor getDisabledTextColor = nullptr;
+	using getDisabledTextColor_t = auto (*)() -> COLORREF;
+	inline getDisabledTextColor_t getDisabledTextColor = nullptr;
 
-	using fnGetLinkTextColor = auto (*)() -> COLORREF;
-	inline fnGetLinkTextColor getLinkTextColor = nullptr;
+	using getLinkTextColor_t = auto (*)() -> COLORREF;
+	inline getLinkTextColor_t getLinkTextColor = nullptr;
 
-	using fnGetEdgeColor = auto (*)() -> COLORREF;
-	inline fnGetEdgeColor getEdgeColor = nullptr;
+	using getEdgeColor_t = auto (*)() -> COLORREF;
+	inline getEdgeColor_t getEdgeColor = nullptr;
 
-	using fnGetHotEdgeColor = auto (*)() -> COLORREF;
-	inline fnGetHotEdgeColor getHotEdgeColor = nullptr;
+	using getHotEdgeColor_t = auto (*)() -> COLORREF;
+	inline getHotEdgeColor_t getHotEdgeColor = nullptr;
 
-	using fnGetDisabledEdgeColor = auto (*)() -> COLORREF;
-	inline fnGetDisabledEdgeColor getDisabledEdgeColor = nullptr;
+	using getDisabledEdgeColor_t = auto (*)() -> COLORREF;
+	inline getDisabledEdgeColor_t getDisabledEdgeColor = nullptr;
 
-	using fnGetHighlightColor = auto (*)() -> COLORREF;
-	inline fnGetHighlightColor getHighlightColor = nullptr;
+	using getHighlightColor_t = auto (*)() -> COLORREF;
+	inline getHighlightColor_t getHighlightColor = nullptr;
 
-	using fnGetBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetBackgroundBrush getBackgroundBrush = nullptr;
+	using getBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getBackgroundBrush_t getBackgroundBrush = nullptr;
 
-	using fnGetDlgBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetDlgBackgroundBrush getDlgBackgroundBrush = nullptr;
+	using getDlgBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getDlgBackgroundBrush_t getDlgBackgroundBrush = nullptr;
 
-	using fnGetCtrlBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetCtrlBackgroundBrush getCtrlBackgroundBrush = nullptr;
+	using getCtrlBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getCtrlBackgroundBrush_t getCtrlBackgroundBrush = nullptr;
 
-	using fnGetHotBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetHotBackgroundBrush getHotBackgroundBrush = nullptr;
+	using getHotBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getHotBackgroundBrush_t getHotBackgroundBrush = nullptr;
 
-	using fnGetErrorBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetErrorBackgroundBrush getErrorBackgroundBrush = nullptr;
+	using getErrorBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getErrorBackgroundBrush_t getErrorBackgroundBrush = nullptr;
 
-	using fnGetEdgeBrush = auto (*)() -> HBRUSH;
-	inline fnGetEdgeBrush getEdgeBrush = nullptr;
+	using getEdgeBrush_t = auto (*)() -> HBRUSH;
+	inline getEdgeBrush_t getEdgeBrush = nullptr;
 
-	using fnGetHotEdgeBrush = auto (*)() -> HBRUSH;
-	inline fnGetHotEdgeBrush getHotEdgeBrush = nullptr;
+	using getHotEdgeBrush_t = auto (*)() -> HBRUSH;
+	inline getHotEdgeBrush_t getHotEdgeBrush = nullptr;
 
-	using fnGetDisabledEdgeBrush = auto (*)() -> HBRUSH;
-	inline fnGetDisabledEdgeBrush getDisabledEdgeBrush = nullptr;
+	using getDisabledEdgeBrush_t = auto (*)() -> HBRUSH;
+	inline getDisabledEdgeBrush_t getDisabledEdgeBrush = nullptr;
 
-	using fnGetHighlightBrush = auto (*)() -> HBRUSH;
-	inline fnGetHighlightBrush getHighlightBrush = nullptr;
+	using getHighlightBrush_t = auto (*)() -> HBRUSH;
+	inline getHighlightBrush_t getHighlightBrush = nullptr;
 
-	using fnGetDarkerTextPen = auto (*)() -> HPEN;
-	inline fnGetDarkerTextPen getDarkerTextPen = nullptr;
+	using getDarkerTextPen_t = auto (*)() -> HPEN;
+	inline getDarkerTextPen_t getDarkerTextPen = nullptr;
 
-	using fnGetEdgePen = auto (*)() -> HPEN;
-	inline fnGetEdgePen getEdgePen = nullptr;
+	using getEdgePen_t = auto (*)() -> HPEN;
+	inline getEdgePen_t getEdgePen = nullptr;
 
-	using fnGetHotEdgePen = auto (*)() -> HPEN;
-	inline fnGetHotEdgePen getHotEdgePen = nullptr;
+	using getHotEdgePen_t = auto (*)() -> HPEN;
+	inline getHotEdgePen_t getHotEdgePen = nullptr;
 
-	using fnGetDisabledEdgePen = auto (*)() -> HPEN;
-	inline fnGetDisabledEdgePen getDisabledEdgePen = nullptr;
+	using getDisabledEdgePen_t = auto (*)() -> HPEN;
+	inline getDisabledEdgePen_t getDisabledEdgePen = nullptr;
 
-	using fnGetHighlightPen = auto (*)() -> HPEN;
-	inline fnGetHighlightPen getHighlightPen = nullptr;
+	using getHighlightPen_t = auto (*)() -> HPEN;
+	inline getHighlightPen_t getHighlightPen = nullptr;
 
-	using fnSetViewBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetViewBackgroundColor setViewBackgroundColor = nullptr;
+	using setViewBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setViewBackgroundColor_t setViewBackgroundColor = nullptr;
 
-	using fnSetViewTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetViewTextColor setViewTextColor = nullptr;
+	using setViewTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setViewTextColor_t setViewTextColor = nullptr;
 
-	using fnSetViewGridlinesColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetViewGridlinesColor setViewGridlinesColor = nullptr;
+	using setViewGridlinesColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setViewGridlinesColor_t setViewGridlinesColor = nullptr;
 
-	using fnSetHeaderBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHeaderBackgroundColor setHeaderBackgroundColor = nullptr;
+	using setHeaderBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHeaderBackgroundColor_t setHeaderBackgroundColor = nullptr;
 
-	using fnSetHeaderHotBackgroundColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHeaderHotBackgroundColor setHeaderHotBackgroundColor = nullptr;
+	using setHeaderHotBackgroundColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHeaderHotBackgroundColor_t setHeaderHotBackgroundColor = nullptr;
 
-	using fnSetHeaderTextColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHeaderTextColor setHeaderTextColor = nullptr;
+	using setHeaderTextColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHeaderTextColor_t setHeaderTextColor = nullptr;
 
-	using fnSetHeaderEdgeColor = auto (*)(COLORREF clrNew) -> COLORREF;
-	inline fnSetHeaderEdgeColor setHeaderEdgeColor = nullptr;
+	using setHeaderEdgeColor_t = auto (*)(COLORREF clrNew) -> COLORREF;
+	inline setHeaderEdgeColor_t setHeaderEdgeColor = nullptr;
 
-	using fnSetViewColors = void (*)(ColorsView colors);
-	inline fnSetViewColors setViewColors = nullptr;
+	using setViewColors_t = void (*)(ColorsView colors);
+	inline setViewColors_t setViewColors = nullptr;
 
-	using fnUpdateViewBrushesAndPens = void (*)();
-	inline fnUpdateViewBrushesAndPens updateViewBrushesAndPens = nullptr;
+	using updateViewBrushesAndPens_t = void (*)();
+	inline updateViewBrushesAndPens_t updateViewBrushesAndPens = nullptr;
 
-	using fnGetViewBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetViewBackgroundColor getViewBackgroundColor = nullptr;
+	using getViewBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getViewBackgroundColor_t getViewBackgroundColor = nullptr;
 
-	using fnGetViewTextColor = auto (*)() -> COLORREF;
-	inline fnGetViewTextColor getViewTextColor = nullptr;
+	using getViewTextColor_t = auto (*)() -> COLORREF;
+	inline getViewTextColor_t getViewTextColor = nullptr;
 
-	using fnGetViewGridlinesColor = auto (*)() -> COLORREF;
-	inline fnGetViewGridlinesColor getViewGridlinesColor = nullptr;
+	using getViewGridlinesColor_t = auto (*)() -> COLORREF;
+	inline getViewGridlinesColor_t getViewGridlinesColor = nullptr;
 
-	using fnGetHeaderBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetHeaderBackgroundColor getHeaderBackgroundColor = nullptr;
+	using getHeaderBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getHeaderBackgroundColor_t getHeaderBackgroundColor = nullptr;
 
-	using fnGetHeaderHotBackgroundColor = auto (*)() -> COLORREF;
-	inline fnGetHeaderHotBackgroundColor getHeaderHotBackgroundColor = nullptr;
+	using getHeaderHotBackgroundColor_t = auto (*)() -> COLORREF;
+	inline getHeaderHotBackgroundColor_t getHeaderHotBackgroundColor = nullptr;
 
-	using fnGetHeaderTextColor = auto (*)() -> COLORREF;
-	inline fnGetHeaderTextColor getHeaderTextColor = nullptr;
+	using getHeaderTextColor_t = auto (*)() -> COLORREF;
+	inline getHeaderTextColor_t getHeaderTextColor = nullptr;
 
-	using fnGetHeaderEdgeColor = auto (*)() -> COLORREF;
-	inline fnGetHeaderEdgeColor getHeaderEdgeColor = nullptr;
+	using getHeaderEdgeColor_t = auto (*)() -> COLORREF;
+	inline getHeaderEdgeColor_t getHeaderEdgeColor = nullptr;
 
-	using fnGetViewBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetViewBackgroundBrush getViewBackgroundBrush = nullptr;
+	using getViewBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getViewBackgroundBrush_t getViewBackgroundBrush = nullptr;
 
-	using fnGetViewGridlinesBrush = auto (*)() -> HBRUSH;
-	inline fnGetViewGridlinesBrush getViewGridlinesBrush = nullptr;
+	using getViewGridlinesBrush_t = auto (*)() -> HBRUSH;
+	inline getViewGridlinesBrush_t getViewGridlinesBrush = nullptr;
 
-	using fnGetHeaderBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetHeaderBackgroundBrush getHeaderBackgroundBrush = nullptr;
+	using getHeaderBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getHeaderBackgroundBrush_t getHeaderBackgroundBrush = nullptr;
 
-	using fnGetHeaderHotBackgroundBrush = auto (*)() -> HBRUSH;
-	inline fnGetHeaderHotBackgroundBrush getHeaderHotBackgroundBrush = nullptr;
+	using getHeaderHotBackgroundBrush_t = auto (*)() -> HBRUSH;
+	inline getHeaderHotBackgroundBrush_t getHeaderHotBackgroundBrush = nullptr;
 
-	using fnGetHeaderEdgePen = auto (*)() -> HPEN;
-	inline fnGetHeaderEdgePen getHeaderEdgePen = nullptr;
+	using getHeaderEdgePen_t = auto (*)() -> HPEN;
+	inline getHeaderEdgePen_t getHeaderEdgePen = nullptr;
 
-	using fnSetDefaultColors = void (*)(bool updateBrushesAndOther);
-	inline fnSetDefaultColors setDefaultColors = nullptr;
+	using setDefaultColors_t = void (*)(bool updateBrushesAndOther);
+	inline setDefaultColors_t setDefaultColors = nullptr;
 
-	using fnSetCheckboxOrRadioBtnCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetCheckboxOrRadioBtnCtrlSubclass setCheckboxOrRadioBtnCtrlSubclass = nullptr;
+	using setCheckboxOrRadioBtnCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setCheckboxOrRadioBtnCtrlSubclass_t setCheckboxOrRadioBtnCtrlSubclass = nullptr;
 
-	using fnRemoveCheckboxOrRadioBtnCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveCheckboxOrRadioBtnCtrlSubclass removeCheckboxOrRadioBtnCtrlSubclass = nullptr;
+	using removeCheckboxOrRadioBtnCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeCheckboxOrRadioBtnCtrlSubclass_t removeCheckboxOrRadioBtnCtrlSubclass = nullptr;
 
-	using fnSetGroupboxCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetGroupboxCtrlSubclass setGroupboxCtrlSubclass = nullptr;
+	using setGroupboxCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setGroupboxCtrlSubclass_t setGroupboxCtrlSubclass = nullptr;
 
-	using fnRemoveGroupboxCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveGroupboxCtrlSubclass removeGroupboxCtrlSubclass = nullptr;
+	using removeGroupboxCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeGroupboxCtrlSubclass_t removeGroupboxCtrlSubclass = nullptr;
 
-	using fnSetUpDownCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetUpDownCtrlSubclass setUpDownCtrlSubclass = nullptr;
+	using setUpDownCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setUpDownCtrlSubclass_t setUpDownCtrlSubclass = nullptr;
 
-	using fnRemoveUpDownCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveUpDownCtrlSubclass removeUpDownCtrlSubclass = nullptr;
+	using removeUpDownCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeUpDownCtrlSubclass_t removeUpDownCtrlSubclass = nullptr;
 
-	using fnSetTabCtrlUpDownSubclass = void (*)(HWND hWnd);
-	inline fnSetTabCtrlUpDownSubclass setTabCtrlUpDownSubclass = nullptr;
+	using setTabCtrlUpDownSubclass_t = void (*)(HWND hWnd);
+	inline setTabCtrlUpDownSubclass_t setTabCtrlUpDownSubclass = nullptr;
 
-	using fnRemoveTabCtrlUpDownSubclass = void (*)(HWND hWnd);
-	inline fnRemoveTabCtrlUpDownSubclass removeTabCtrlUpDownSubclass = nullptr;
+	using removeTabCtrlUpDownSubclass_t = void (*)(HWND hWnd);
+	inline removeTabCtrlUpDownSubclass_t removeTabCtrlUpDownSubclass = nullptr;
 
-	using fnSetTabCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetTabCtrlSubclass setTabCtrlSubclass = nullptr;
+	using setTabCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setTabCtrlSubclass_t setTabCtrlSubclass = nullptr;
 
-	using fnRemoveTabCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveTabCtrlSubclass removeTabCtrlSubclass = nullptr;
+	using removeTabCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeTabCtrlSubclass_t removeTabCtrlSubclass = nullptr;
 
-	using fnSetCustomBorderForListBoxOrEditCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetCustomBorderForListBoxOrEditCtrlSubclass setCustomBorderForListBoxOrEditCtrlSubclass = nullptr;
+	using setCustomBorderForListBoxOrEditCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setCustomBorderForListBoxOrEditCtrlSubclass_t setCustomBorderForListBoxOrEditCtrlSubclass = nullptr;
 
-	using fnRemoveCustomBorderForListBoxOrEditCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveCustomBorderForListBoxOrEditCtrlSubclass removeCustomBorderForListBoxOrEditCtrlSubclass = nullptr;
+	using removeCustomBorderForListBoxOrEditCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeCustomBorderForListBoxOrEditCtrlSubclass_t removeCustomBorderForListBoxOrEditCtrlSubclass = nullptr;
 
-	using fnSetComboBoxCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetComboBoxCtrlSubclass setComboBoxCtrlSubclass = nullptr;
+	using setComboBoxCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setComboBoxCtrlSubclass_t setComboBoxCtrlSubclass = nullptr;
 
-	using fnRemoveComboBoxCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveComboBoxCtrlSubclass removeComboBoxCtrlSubclass = nullptr;
+	using removeComboBoxCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeComboBoxCtrlSubclass_t removeComboBoxCtrlSubclass = nullptr;
 
-	using fnSetComboBoxExCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetComboBoxExCtrlSubclass setComboBoxExCtrlSubclass = nullptr;
+	using setComboBoxExCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setComboBoxExCtrlSubclass_t setComboBoxExCtrlSubclass = nullptr;
 
-	using fnRemoveComboBoxExCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveComboBoxExCtrlSubclass removeComboBoxExCtrlSubclass = nullptr;
+	using removeComboBoxExCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeComboBoxExCtrlSubclass_t removeComboBoxExCtrlSubclass = nullptr;
 
-	using fnSetListViewCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetListViewCtrlSubclass setListViewCtrlSubclass = nullptr;
+	using setListViewCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setListViewCtrlSubclass_t setListViewCtrlSubclass = nullptr;
 
-	using fnRemoveListViewCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveListViewCtrlSubclass removeListViewCtrlSubclass = nullptr;
+	using removeListViewCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeListViewCtrlSubclass_t removeListViewCtrlSubclass = nullptr;
 
-	using fnSetHeaderCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetHeaderCtrlSubclass setHeaderCtrlSubclass = nullptr;
+	using setHeaderCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setHeaderCtrlSubclass_t setHeaderCtrlSubclass = nullptr;
 
-	using fnRemoveHeaderCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveHeaderCtrlSubclass removeHeaderCtrlSubclass = nullptr;
+	using removeHeaderCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeHeaderCtrlSubclass_t removeHeaderCtrlSubclass = nullptr;
 
-	using fnSetStatusBarCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetStatusBarCtrlSubclass setStatusBarCtrlSubclass = nullptr;
+	using setStatusBarCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setStatusBarCtrlSubclass_t setStatusBarCtrlSubclass = nullptr;
 
-	using fnRemoveStatusBarCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveStatusBarCtrlSubclass removeStatusBarCtrlSubclass = nullptr;
+	using removeStatusBarCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeStatusBarCtrlSubclass_t removeStatusBarCtrlSubclass = nullptr;
 
-	using fnSetProgressBarCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetProgressBarCtrlSubclass setProgressBarCtrlSubclass = nullptr;
+	using setProgressBarCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setProgressBarCtrlSubclass_t setProgressBarCtrlSubclass = nullptr;
 
-	using fnRemoveProgressBarCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveProgressBarCtrlSubclass removeProgressBarCtrlSubclass = nullptr;
+	using removeProgressBarCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeProgressBarCtrlSubclass_t removeProgressBarCtrlSubclass = nullptr;
 
-	using fnSetStaticTextCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetStaticTextCtrlSubclass setStaticTextCtrlSubclass = nullptr;
+	using setStaticTextCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setStaticTextCtrlSubclass_t setStaticTextCtrlSubclass = nullptr;
 
-	using fnRemoveStaticTextCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveStaticTextCtrlSubclass removeStaticTextCtrlSubclass = nullptr;
+	using removeStaticTextCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeStaticTextCtrlSubclass_t removeStaticTextCtrlSubclass = nullptr;
 
-	using fnSetIPAddressCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetIPAddressCtrlSubclass setIPAddressCtrlSubclass = nullptr;
+	using setIPAddressCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setIPAddressCtrlSubclass_t setIPAddressCtrlSubclass = nullptr;
 
-	using fnRemoveIPAddressCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveIPAddressCtrlSubclass removeIPAddressCtrlSubclass = nullptr;
+	using removeIPAddressCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeIPAddressCtrlSubclass_t removeIPAddressCtrlSubclass = nullptr;
 
-	using fnSetHotKeyCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetHotKeyCtrlSubclass setHotKeyCtrlSubclass = nullptr;
+	using setHotKeyCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setHotKeyCtrlSubclass_t setHotKeyCtrlSubclass = nullptr;
 
-	using fnRemoveHotKeyCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveHotKeyCtrlSubclass removeHotKeyCtrlSubclass = nullptr;
+	using removeHotKeyCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeHotKeyCtrlSubclass_t removeHotKeyCtrlSubclass = nullptr;
 
-	using fnSetDTPCtrlSubclass = void (*)(HWND hWnd);
-	inline fnSetDTPCtrlSubclass setDTPCtrlSubclass = nullptr;
+	using setDTPCtrlSubclass_t = void (*)(HWND hWnd);
+	inline setDTPCtrlSubclass_t setDTPCtrlSubclass = nullptr;
 
-	using fnRemoveDTPCtrlSubclass = void (*)(HWND hWnd);
-	inline fnRemoveDTPCtrlSubclass removeDTPCtrlSubclass = nullptr;
+	using removeDTPCtrlSubclass_t = void (*)(HWND hWnd);
+	inline removeDTPCtrlSubclass_t removeDTPCtrlSubclass = nullptr;
 
-	using fnSetChildCtrlsSubclassAndThemeEx = void (*)(HWND hParent, bool subclass, bool theme);
-	inline fnSetChildCtrlsSubclassAndThemeEx setChildCtrlsSubclassAndThemeEx = nullptr;
+	using setChildCtrlsSubclassAndThemeEx_t = void (*)(HWND hParent, bool subclass, bool theme);
+	inline setChildCtrlsSubclassAndThemeEx_t setChildCtrlsSubclassAndThemeEx = nullptr;
 
-	using fnSetChildCtrlsSubclassAndTheme = void (*)(HWND hParent);
-	inline fnSetChildCtrlsSubclassAndTheme setChildCtrlsSubclassAndTheme = nullptr;
+	using setChildCtrlsSubclassAndTheme_t = void (*)(HWND hParent);
+	inline setChildCtrlsSubclassAndTheme_t setChildCtrlsSubclassAndTheme = nullptr;
 
-	using fnSetChildCtrlsTheme = void (*)(HWND hParent);
-	inline fnSetChildCtrlsTheme setChildCtrlsTheme = nullptr;
+	using setChildCtrlsTheme_t = void (*)(HWND hParent);
+	inline setChildCtrlsTheme_t setChildCtrlsTheme = nullptr;
 
-	using fnSetWindowEraseBgSubclass = void (*)(HWND hWnd);
-	inline fnSetWindowEraseBgSubclass setWindowEraseBgSubclass = nullptr;
+	using setWindowEraseBgSubclass_t = void (*)(HWND hWnd);
+	inline setWindowEraseBgSubclass_t setWindowEraseBgSubclass = nullptr;
 
-	using fnRemoveWindowEraseBgSubclass = void (*)(HWND hWnd);
-	inline fnRemoveWindowEraseBgSubclass removeWindowEraseBgSubclass = nullptr;
+	using removeWindowEraseBgSubclass_t = void (*)(HWND hWnd);
+	inline removeWindowEraseBgSubclass_t removeWindowEraseBgSubclass = nullptr;
 
-	using fnSetWindowCtlColorSubclass = void (*)(HWND hWnd);
-	inline fnSetWindowCtlColorSubclass setWindowCtlColorSubclass = nullptr;
+	using setWindowCtlColorSubclass_t = void (*)(HWND hWnd);
+	inline setWindowCtlColorSubclass_t setWindowCtlColorSubclass = nullptr;
 
-	using fnRemoveWindowCtlColorSubclass = void (*)(HWND hWnd);
-	inline fnRemoveWindowCtlColorSubclass removeWindowCtlColorSubclass = nullptr;
+	using removeWindowCtlColorSubclass_t = void (*)(HWND hWnd);
+	inline removeWindowCtlColorSubclass_t removeWindowCtlColorSubclass = nullptr;
 
-	using fnSetWindowNotifyCustomDrawSubclass = void (*)(HWND hWnd);
-	inline fnSetWindowNotifyCustomDrawSubclass setWindowNotifyCustomDrawSubclass = nullptr;
+	using setWindowNotifyCustomDrawSubclass_t = void (*)(HWND hWnd);
+	inline setWindowNotifyCustomDrawSubclass_t setWindowNotifyCustomDrawSubclass = nullptr;
 
-	using fnRemoveWindowNotifyCustomDrawSubclass = void (*)(HWND hWnd);
-	inline fnRemoveWindowNotifyCustomDrawSubclass removeWindowNotifyCustomDrawSubclass = nullptr;
+	using removeWindowNotifyCustomDrawSubclass_t = void (*)(HWND hWnd);
+	inline removeWindowNotifyCustomDrawSubclass_t removeWindowNotifyCustomDrawSubclass = nullptr;
 
-	using fnSetWindowMenuBarSubclass = void (*)(HWND hWnd);
-	inline fnSetWindowMenuBarSubclass setWindowMenuBarSubclass = nullptr;
+	using setWindowMenuBarSubclass_t = void (*)(HWND hWnd);
+	inline setWindowMenuBarSubclass_t setWindowMenuBarSubclass = nullptr;
 
-	using fnRemoveWindowMenuBarSubclass = void (*)(HWND hWnd);
-	inline fnRemoveWindowMenuBarSubclass removeWindowMenuBarSubclass = nullptr;
+	using removeWindowMenuBarSubclass_t = void (*)(HWND hWnd);
+	inline removeWindowMenuBarSubclass_t removeWindowMenuBarSubclass = nullptr;
 
-	using fnSetWindowSettingChangeSubclass = void (*)(HWND hWnd);
-	inline fnSetWindowSettingChangeSubclass setWindowSettingChangeSubclass = nullptr;
+	using setWindowSettingChangeSubclass_t = void (*)(HWND hWnd);
+	inline setWindowSettingChangeSubclass_t setWindowSettingChangeSubclass = nullptr;
 
-	using fnRemoveWindowSettingChangeSubclass = void (*)(HWND hWnd);
-	inline fnRemoveWindowSettingChangeSubclass removeWindowSettingChangeSubclass = nullptr;
+	using removeWindowSettingChangeSubclass_t = void (*)(HWND hWnd);
+	inline removeWindowSettingChangeSubclass_t removeWindowSettingChangeSubclass = nullptr;
 
-	using fnEnableSysLinkCtrlCtlColor = void (*)(HWND hWnd);
-	inline fnEnableSysLinkCtrlCtlColor enableSysLinkCtrlCtlColor = nullptr;
+	using enableSysLinkCtrlCtlColor_t = void (*)(HWND hWnd);
+	inline enableSysLinkCtrlCtlColor_t enableSysLinkCtrlCtlColor = nullptr;
 
-	using fnSetDarkTitleBarEx = void (*)(HWND hWnd, bool useWin11Features);
-	inline fnSetDarkTitleBarEx setDarkTitleBarEx = nullptr;
+	using setDarkTitleBarEx_t = void (*)(HWND hWnd, bool useWin11Features);
+	inline setDarkTitleBarEx_t setDarkTitleBarEx = nullptr;
 
-	using fnSetDarkTitleBar = void (*)(HWND hWnd);
-	inline fnSetDarkTitleBar setDarkTitleBar = nullptr;
+	using setDarkTitleBar_t = void (*)(HWND hWnd);
+	inline setDarkTitleBar_t setDarkTitleBar = nullptr;
 
-	using fnGetDarkModeThemeName = const wchar_t* (*)();
-	inline fnGetDarkModeThemeName getDarkModeThemeName = nullptr;
+	using getDarkModeThemeName_t = const wchar_t* (*)();
+	inline getDarkModeThemeName_t getDarkModeThemeName = nullptr;
 
-	using fnSetDarkThemeExperimentalEx = void (*)(HWND hWnd, const wchar_t* themeClassName);
-	inline fnSetDarkThemeExperimentalEx setDarkThemeExperimentalEx = nullptr;
+	using setDarkThemeExperimentalEx_t = void (*)(HWND hWnd, const wchar_t* themeClassName);
+	inline setDarkThemeExperimentalEx_t setDarkThemeExperimentalEx = nullptr;
 
-	using fnSetDarkThemeExperimental = void (*)(HWND hWnd);
-	inline fnSetDarkThemeExperimental setDarkThemeExperimental = nullptr;
+	using setDarkThemeExperimental_t = void (*)(HWND hWnd);
+	inline setDarkThemeExperimental_t setDarkThemeExperimental = nullptr;
 
-	using fnSetDarkExplorerTheme = void (*)(HWND hWnd);
-	inline fnSetDarkExplorerTheme setDarkExplorerTheme = nullptr;
+	using setDarkExplorerTheme_t = void (*)(HWND hWnd);
+	inline setDarkExplorerTheme_t setDarkExplorerTheme = nullptr;
 
-	using fnSetDarkScrollBar = void (*)(HWND hWnd);
-	inline fnSetDarkScrollBar setDarkScrollBar = nullptr;
+	using setDarkScrollBar_t = void (*)(HWND hWnd);
+	inline setDarkScrollBar_t setDarkScrollBar = nullptr;
 
-	using fnSetDarkTooltips = void (*)(HWND hWnd, int tooltipType);
-	inline fnSetDarkTooltips setDarkTooltips = nullptr;
+	using setDarkTooltips_t = void (*)(HWND hWnd, int tooltipType);
+	inline setDarkTooltips_t setDarkTooltips = nullptr;
 
-	using fnSetDarkLineAbovePanelToolbar = void (*)(HWND hWnd);
-	inline fnSetDarkLineAbovePanelToolbar setDarkLineAbovePanelToolbar = nullptr;
+	using setDarkLineAbovePanelToolbar_t = void (*)(HWND hWnd);
+	inline setDarkLineAbovePanelToolbar_t setDarkLineAbovePanelToolbar = nullptr;
 
-	using fnSetDarkListView = void (*)(HWND hWnd);
-	inline fnSetDarkListView setDarkListView = nullptr;
+	using setDarkListView_t = void (*)(HWND hWnd);
+	inline setDarkListView_t setDarkListView = nullptr;
 
-	using fnSetDarkListViewCheckboxes = void (*)(HWND hWnd);
-	inline fnSetDarkListViewCheckboxes setDarkListViewCheckboxes = nullptr;
+	using setDarkListViewCheckboxes_t = void (*)(HWND hWnd);
+	inline setDarkListViewCheckboxes_t setDarkListViewCheckboxes = nullptr;
 
-	using fnSetDarkTreeViewCheckboxes = void (*)(HWND hWnd);
-	inline fnSetDarkTreeViewCheckboxes setDarkTreeViewCheckboxes = nullptr;
+	using setDarkTreeViewCheckboxes_t = void (*)(HWND hWnd);
+	inline setDarkTreeViewCheckboxes_t setDarkTreeViewCheckboxes = nullptr;
 
-	using fnSetDarkRichEdit = void (*)(HWND hWnd);
-	inline fnSetDarkRichEdit setDarkRichEdit = nullptr;
+	using setDarkRichEdit_t = void (*)(HWND hWnd);
+	inline setDarkRichEdit_t setDarkRichEdit = nullptr;
 
-	using fnSetDarkMonthCalendar = void (*)(HWND hWnd);
-	inline fnSetDarkMonthCalendar setDarkMonthCalendar = nullptr;
+	using setDarkMonthCalendar_t = void (*)(HWND hWnd);
+	inline setDarkMonthCalendar_t setDarkMonthCalendar = nullptr;
 
-	using fnSetDarkWndSafeEx = void (*)(HWND hWnd, bool useWin11Features);
-	inline fnSetDarkWndSafeEx setDarkWndSafeEx = nullptr;
+	using setDarkWndSafeEx_t = void (*)(HWND hWnd, bool useWin11Features);
+	inline setDarkWndSafeEx_t setDarkWndSafeEx = nullptr;
 
-	using fnSetDarkWndSafe = void (*)(HWND hWnd);
-	inline fnSetDarkWndSafe setDarkWndSafe = nullptr;
+	using setDarkWndSafe_t = void (*)(HWND hWnd);
+	inline setDarkWndSafe_t setDarkWndSafe = nullptr;
 
-	using fnSetDarkWndNotifySafeEx = void (*)(HWND hWnd, bool setSettingChangeSubclass, bool useWin11Features);
-	inline fnSetDarkWndNotifySafeEx setDarkWndNotifySafeEx = nullptr;
+	using setDarkWndNotifySafeEx_t = void (*)(HWND hWnd, bool setSettingChangeSubclass, bool useWin11Features);
+	inline setDarkWndNotifySafeEx_t setDarkWndNotifySafeEx = nullptr;
 
-	using fnSetDarkWndNotifySafe = void (*)(HWND hWnd);
-	inline fnSetDarkWndNotifySafe setDarkWndNotifySafe = nullptr;
+	using setDarkWndNotifySafe_t = void (*)(HWND hWnd);
+	inline setDarkWndNotifySafe_t setDarkWndNotifySafe = nullptr;
 
-	using fnEnableThemeDialogTexture = void (*)(HWND hWnd, bool theme);
-	inline fnEnableThemeDialogTexture enableThemeDialogTexture = nullptr;
+	using enableThemeDialogTexture_t = void (*)(HWND hWnd, bool theme);
+	inline enableThemeDialogTexture_t enableThemeDialogTexture = nullptr;
 
-	using fnDisableVisualStyle = void (*)(HWND hWnd, bool doDisable);
-	inline fnDisableVisualStyle disableVisualStyle = nullptr;
+	using disableVisualStyle_t = void (*)(HWND hWnd, bool doDisable);
+	inline disableVisualStyle_t disableVisualStyle = nullptr;
 
-	using fnCalculatePerceivedLightness = auto (*)(COLORREF clr) -> double;
-	inline fnCalculatePerceivedLightness calculatePerceivedLightness = nullptr;
+	using calculatePerceivedLightness_t = auto (*)(COLORREF clr) -> double;
+	inline calculatePerceivedLightness_t calculatePerceivedLightness = nullptr;
 
-	using fnGetTreeViewStyle = auto (*)() -> int;
-	inline fnGetTreeViewStyle getTreeViewStyle = nullptr;
+	using getTreeViewStyle_t = auto (*)() -> int;
+	inline getTreeViewStyle_t getTreeViewStyle = nullptr;
 
-	using fnCalculateTreeViewStyle = void (*)();
-	inline fnCalculateTreeViewStyle calculateTreeViewStyle = nullptr;
+	using calculateTreeViewStyle_t = void (*)();
+	inline calculateTreeViewStyle_t calculateTreeViewStyle = nullptr;
 
-	using fnSetTreeViewWindowThemeEx = void (*)(HWND hWnd, bool force);
-	inline fnSetTreeViewWindowThemeEx setTreeViewWindowThemeEx = nullptr;
+	using setTreeViewWindowThemeEx_t = void (*)(HWND hWnd, bool force);
+	inline setTreeViewWindowThemeEx_t setTreeViewWindowThemeEx = nullptr;
 
-	using fnSetTreeViewWindowTheme = void (*)(HWND hWnd);
-	inline fnSetTreeViewWindowTheme setTreeViewWindowTheme = nullptr;
+	using setTreeViewWindowTheme_t = void (*)(HWND hWnd);
+	inline setTreeViewWindowTheme_t setTreeViewWindowTheme = nullptr;
 
-	using fnGetPrevTreeViewStyle = auto (*)() -> int;
-	inline fnGetPrevTreeViewStyle getPrevTreeViewStyle = nullptr;
+	using getPrevTreeViewStyle_t = auto (*)() -> int;
+	inline getPrevTreeViewStyle_t getPrevTreeViewStyle = nullptr;
 
-	using fnSetPrevTreeViewStyle = void (*)();
-	inline fnSetPrevTreeViewStyle setPrevTreeViewStyle = nullptr;
+	using setPrevTreeViewStyle_t = void (*)();
+	inline setPrevTreeViewStyle_t setPrevTreeViewStyle = nullptr;
 
-	using fnIsThemeDark = auto (*)() -> bool;
-	inline fnIsThemeDark isThemeDark = nullptr;
+	using isThemeDark_t = auto (*)() -> bool;
+	inline isThemeDark_t isThemeDark = nullptr;
 
-	using fnIsColorDark = auto (*)(COLORREF clr) -> bool;
-	inline fnIsColorDark isColorDark = nullptr;
+	using isColorDark_t = auto (*)(COLORREF clr) -> bool;
+	inline isColorDark_t isColorDark = nullptr;
 
-	using fnRedrawWindowFrame = void (*)(HWND hWnd);
-	inline fnRedrawWindowFrame redrawWindowFrame = nullptr;
+	using redrawWindowFrame_t = void (*)(HWND hWnd);
+	inline redrawWindowFrame_t redrawWindowFrame = nullptr;
 
-	using fnSetWindowStyle = void (*)(HWND hWnd, bool setStyle, LONG_PTR styleFlag);
-	inline fnSetWindowStyle setWindowStyle = nullptr;
+	using setWindowStyle_t = void (*)(HWND hWnd, bool setStyle, LONG_PTR styleFlag);
+	inline setWindowStyle_t setWindowStyle = nullptr;
 
-	using fnSetWindowExStyle = void (*)(HWND hWnd, bool setExStyle, LONG_PTR exStyleFlag);
-	inline fnSetWindowExStyle setWindowExStyle = nullptr;
+	using setWindowExStyle_t = void (*)(HWND hWnd, bool setExStyle, LONG_PTR exStyleFlag);
+	inline setWindowExStyle_t setWindowExStyle = nullptr;
 
-	using fnReplaceExEdgeWithBorder = void (*)(HWND hWnd, bool replace, LONG_PTR exStyleFlag);
-	inline fnReplaceExEdgeWithBorder replaceExEdgeWithBorder = nullptr;
+	using replaceExEdgeWithBorder_t = void (*)(HWND hWnd, bool replace, LONG_PTR exStyleFlag);
+	inline replaceExEdgeWithBorder_t replaceExEdgeWithBorder = nullptr;
 
-	using fnReplaceClientEdgeWithBorderSafeEx = void (*)(HWND hWnd);
-	inline fnReplaceClientEdgeWithBorderSafeEx replaceClientEdgeWithBorderSafeEx = nullptr;
+	using replaceClientEdgeWithBorderSafeEx_t = void (*)(HWND hWnd);
+	inline replaceClientEdgeWithBorderSafeEx_t replaceClientEdgeWithBorderSafeEx = nullptr;
 
-	using fnReplaceClientEdgeWithBorderSafe = void (*)(HWND hWnd);
-	inline fnReplaceClientEdgeWithBorderSafe replaceClientEdgeWithBorderSafe = nullptr;
+	using replaceClientEdgeWithBorderSafe_t = void (*)(HWND hWnd);
+	inline replaceClientEdgeWithBorderSafe_t replaceClientEdgeWithBorderSafe = nullptr;
 
-	using fnSetProgressBarClassicTheme = void (*)(HWND hWnd);
-	inline fnSetProgressBarClassicTheme setProgressBarClassicTheme = nullptr;
+	using setProgressBarClassicTheme_t = void (*)(HWND hWnd);
+	inline setProgressBarClassicTheme_t setProgressBarClassicTheme = nullptr;
 
-	using fnOnCtlColor = void (*)(HDC hdc);
-	inline fnOnCtlColor onCtlColor = nullptr;
+	using onCtlColor_t = void (*)(HDC hdc);
+	inline onCtlColor_t onCtlColor = nullptr;
 
-	using fnOnCtlColorCtrl = void (*)(HDC hdc);
-	inline fnOnCtlColorCtrl onCtlColorCtrl = nullptr;
+	using onCtlColorCtrl_t = void (*)(HDC hdc);
+	inline onCtlColorCtrl_t onCtlColorCtrl = nullptr;
 
-	using fnOnCtlColorDlg = void (*)(HDC hdc);
-	inline fnOnCtlColorDlg onCtlColorDlg = nullptr;
+	using onCtlColorDlg_t = void (*)(HDC hdc);
+	inline onCtlColorDlg_t onCtlColorDlg = nullptr;
 
-	using fnOnCtlColorError = void (*)(HDC hdc);
-	inline fnOnCtlColorError onCtlColorError = nullptr;
+	using onCtlColorError_t = void (*)(HDC hdc);
+	inline onCtlColorError_t onCtlColorError = nullptr;
 
-	using fnOnCtlColorDlgStaticText = void (*)(HDC hdc, bool isTextEnabled);
-	inline fnOnCtlColorDlgStaticText onCtlColorDlgStaticText = nullptr;
+	using onCtlColorDlgStaticText_t = void (*)(HDC hdc, bool isTextEnabled);
+	inline onCtlColorDlgStaticText_t onCtlColorDlgStaticText = nullptr;
 
-	using fnOnCtlColorDlgLinkText = void (*)(HDC hdc, bool isTextEnabled);
-	inline fnOnCtlColorDlgLinkText onCtlColorDlgLinkText = nullptr;
+	using onCtlColorDlgLinkText_t = void (*)(HDC hdc, bool isTextEnabled);
+	inline onCtlColorDlgLinkText_t onCtlColorDlgLinkText = nullptr;
 
-	using fnOnCtlColorListbox = void (*)(WPARAM wParam, LPARAM lParam);
-	inline fnOnCtlColorListbox onCtlColorListbox = nullptr;
+	using onCtlColorListbox_t = void (*)(WPARAM wParam, LPARAM lParam);
+	inline onCtlColorListbox_t onCtlColorListbox = nullptr;
 
-	using fnHookDlgProc = auto (CALLBACK*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR;
-	inline fnHookDlgProc HookDlgProc = nullptr;
+	using HookDlgProc_t = auto (CALLBACK*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR;
+	inline HookDlgProc_t HookDlgProc = nullptr;
 
-	using fnSetDarkTaskDlg = void (*)(HWND hWnd);
-	inline fnSetDarkTaskDlg setDarkTaskDlg = nullptr;
+	using setDarkTaskDlg_t = void (*)(HWND hWnd);
+	inline setDarkTaskDlg_t setDarkTaskDlg = nullptr;
 
-	using fnDarkTaskDlgCallback = auto (CALLBACK*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LONG_PTR lpRefData) -> HRESULT;
-	inline fnDarkTaskDlgCallback DarkTaskDlgCallback = nullptr;
+	using DarkTaskDlgCallback_t = auto (CALLBACK*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LONG_PTR lpRefData) -> HRESULT;
+	inline DarkTaskDlgCallback_t DarkTaskDlgCallback = nullptr;
 
-	using fnDarkTaskDialogIndirect = auto (*)(const TASKDIALOGCONFIG* pTaskConfig, int* pnButton, int* pnRadioButton, BOOL* pfVerificationFlagChecked) -> HRESULT;
-	inline fnDarkTaskDialogIndirect darkTaskDialogIndirect = nullptr;
+	using darkTaskDialogIndirect_t = auto (*)(const TASKDIALOGCONFIG* pTaskConfig, int* pnButton, int* pnRadioButton, BOOL* pfVerificationFlagChecked) -> HRESULT;
+	inline darkTaskDialogIndirect_t darkTaskDialogIndirect = nullptr;
 
-	using fnDarkMessageBoxW = auto (*)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) -> int;
-	inline fnDarkMessageBoxW darkMessageBoxW = nullptr;
+	using darkMessageBoxW_t = auto (*)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) -> int;
+	inline darkMessageBoxW_t darkMessageBoxW = nullptr;
 
 	bool loadDarkModeFunctionsFromDll(const wchar_t* dllName);
 }
